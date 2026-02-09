@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import { BarChart, Users, DollarSign, TrendingUp } from 'lucide-react';
-import Navigation from '@/components/Navigation';
+import { useQuery } from "@tanstack/react-query";
+import { BarChart, Users, DollarSign, TrendingUp } from "lucide-react";
+import Navigation from "@/components/Navigation";
 
 export default function DashboardPage() {
   const { data: summary, isLoading } = useQuery({
-    queryKey: ['dashboard-summary'],
+    queryKey: ["dashboard-summary"],
     queryFn: async () => {
-      const res = await fetch('/api/snowflake/dashboard-summary');
+      const res = await fetch("/api/snowflake/dashboard-summary");
       const json = await res.json();
       return json.data;
     },
   });
 
   const { data: rankings } = useQuery({
-    queryKey: ['aco-rankings'],
+    queryKey: ["aco-rankings"],
     queryFn: async () => {
-      const res = await fetch('/api/snowflake/aco-rankings?limit=10');
+      const res = await fetch("/api/snowflake/aco-rankings?limit=10");
       const json = await res.json();
       return json.data;
     },
@@ -32,7 +32,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <>
+    <div>
       <Navigation />
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-7xl mx-auto">
@@ -117,7 +117,7 @@ export default function DashboardPage() {
                       {aco.SAVINGS_RATE_PCT?.toFixed(2)}%
                     </td>
                     <td className="py-3 px-4 text-right">
-                      {aco.QUALITY_SCORE?.toFixed(1) || 'N/A'}
+                      {aco.QUALITY_SCORE?.toFixed(1) || "N/A"}
                     </td>
                   </tr>
                 ))}
@@ -126,6 +126,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
+    </div>
   );
 }

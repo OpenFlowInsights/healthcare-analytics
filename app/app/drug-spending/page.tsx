@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import {
   DollarSign,
-  Pills,
+  Pill,
   TrendingUp,
   TrendingDown,
   Activity,
   ArrowUp,
   ArrowDown,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   LineChart,
   Line,
@@ -22,9 +22,9 @@ import {
   Legend,
   ResponsiveContainer,
   Treemap,
-} from 'recharts';
-import { useState } from 'react';
-import Navigation from '@/components/Navigation';
+} from "recharts";
+import { useState } from "react";
+import Navigation from "@/components/Navigation";
 
 // Helper functions
 const formatCurrency = (value: number): string => {
@@ -41,14 +41,14 @@ const formatCurrency = (value: number): string => {
 };
 
 const formatPercent = (value: number): string => {
-  const sign = value >= 0 ? '+' : '';
+  const sign = value >= 0 ? "+" : "";
   return `${sign}${value.toFixed(1)}%`;
 };
 
 const formatCurrencyDetailed = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -72,7 +72,7 @@ const CustomTreemapContent = (props: any) => {
         strokeWidth={2}
       />
       {width > 100 && height > 60 && (
-        <>
+        <g>
           <text
             x={x + width / 2}
             y={y + height / 2 - 10}
@@ -92,7 +92,7 @@ const CustomTreemapContent = (props: any) => {
           >
             {formatCurrency(value)}
           </text>
-        </>
+        </g>
       )}
     </g>
   );
@@ -105,17 +105,17 @@ interface KPICardProps {
   icon: React.ReactNode;
   color: string;
   subtitle?: string;
-  trend?: 'up' | 'down';
+  trend?: "up" | "down";
 }
 
 const KPICard = ({ title, value, icon, color, subtitle, trend }: KPICardProps) => {
   const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    purple: 'bg-purple-100 text-purple-600',
-    green: 'bg-green-100 text-green-600',
-    red: 'bg-red-100 text-red-600',
-    orange: 'bg-orange-100 text-orange-600',
-  }[color] || 'bg-gray-100 text-gray-600';
+    blue: "bg-blue-100 text-blue-600",
+    purple: "bg-purple-100 text-purple-600",
+    green: "bg-green-100 text-green-600",
+    red: "bg-red-100 text-red-600",
+    orange: "bg-orange-100 text-orange-600",
+  }[color] || "bg-gray-100 text-gray-600";
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
@@ -126,7 +126,7 @@ const KPICard = ({ title, value, icon, color, subtitle, trend }: KPICardProps) =
             <p className="text-2xl font-bold text-gray-900">{value}</p>
             {trend && (
               <span className="ml-2">
-                {trend === 'up' ? (
+                {trend === "up" ? (
                   <ArrowUp className="w-5 h-5 text-green-600" />
                 ) : (
                   <ArrowDown className="w-5 h-5 text-red-600" />
@@ -160,43 +160,43 @@ const LoadingSkeleton = () => (
 );
 
 export default function DrugSpendingDashboard() {
-  const [sortColumn, setSortColumn] = useState<string>('total_spending');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortColumn, setSortColumn] = useState<string>("total_spending");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [showAll, setShowAll] = useState(false);
 
   // Fetch data from all endpoints
   const { data: summaryData, isLoading: summaryLoading } = useQuery({
-    queryKey: ['drug-spend-summary'],
+    queryKey: ["drug-spend-summary"],
     queryFn: async () => {
-      const res = await fetch('/api/snowflake/drug-spend-summary');
-      if (!res.ok) throw new Error('Failed to fetch summary');
+      const res = await fetch("/api/snowflake/drug-spend-summary");
+      if (!res.ok) throw new Error("Failed to fetch summary");
       return res.json();
     },
   });
 
   const { data: trendData, isLoading: trendLoading } = useQuery({
-    queryKey: ['drug-spend-trend'],
+    queryKey: ["drug-spend-trend"],
     queryFn: async () => {
-      const res = await fetch('/api/snowflake/drug-spend-trend');
-      if (!res.ok) throw new Error('Failed to fetch trend');
+      const res = await fetch("/api/snowflake/drug-spend-trend");
+      if (!res.ok) throw new Error("Failed to fetch trend");
       return res.json();
     },
   });
 
   const { data: driversData, isLoading: driversLoading } = useQuery({
-    queryKey: ['drug-spend-drivers'],
+    queryKey: ["drug-spend-drivers"],
     queryFn: async () => {
-      const res = await fetch('/api/snowflake/drug-spend-drivers?limit=20');
-      if (!res.ok) throw new Error('Failed to fetch drivers');
+      const res = await fetch("/api/snowflake/drug-spend-drivers?limit=20");
+      if (!res.ok) throw new Error("Failed to fetch drivers");
       return res.json();
     },
   });
 
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['drug-spend-categories'],
+    queryKey: ["drug-spend-categories"],
     queryFn: async () => {
-      const res = await fetch('/api/snowflake/drug-spend-categories');
-      if (!res.ok) throw new Error('Failed to fetch categories');
+      const res = await fetch("/api/snowflake/drug-spend-categories");
+      if (!res.ok) throw new Error("Failed to fetch categories");
       return res.json();
     },
   });
@@ -230,18 +230,18 @@ export default function DrugSpendingDashboard() {
     name: cat.category,
     value: cat.total_spending,
     fill: [
-      '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-      '#ec4899', '#14b8a6', '#6366f1', '#84cc16', '#f97316'
+      "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444",
+      "#ec4899", "#14b8a6", "#6366f1", "#84cc16", "#f97316"
     ][index % 10],
   }));
 
   // Handle sorting
   const handleSort = (column: string) => {
     if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortColumn(column);
-      setSortDirection('desc');
+      setSortDirection("desc");
     }
   };
 
@@ -252,7 +252,7 @@ export default function DrugSpendingDashboard() {
     if (aVal === null || aVal === undefined) return 1;
     if (bVal === null || bVal === undefined) return -1;
 
-    if (sortDirection === 'asc') {
+    if (sortDirection === "asc") {
       return aVal > bVal ? 1 : -1;
     }
     return aVal < bVal ? 1 : -1;
@@ -269,7 +269,7 @@ export default function DrugSpendingDashboard() {
   }));
 
   return (
-    <>
+    <div>
       <Navigation />
       <div className="min-h-screen bg-gray-50 p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Drug Spending Dashboard</h1>
@@ -285,7 +285,7 @@ export default function DrugSpendingDashboard() {
         <KPICard
           title="Total Part D Spend"
           value={formatCurrency(summary.total_part_d_spend || 0)}
-          icon={<Pills className="w-6 h-6" />}
+          icon={<Pill className="w-6 h-6" />}
           color="purple"
         />
         <KPICard
@@ -304,12 +304,12 @@ export default function DrugSpendingDashboard() {
               <TrendingDown className="w-6 h-6" />
             )
           }
-          color={summary.combined_qoq_change_pct >= 0 ? 'green' : 'red'}
-          trend={summary.combined_qoq_change_pct >= 0 ? 'up' : 'down'}
+          color={summary.combined_qoq_change_pct >= 0 ? "green" : "red"}
+          trend={summary.combined_qoq_change_pct >= 0 ? "up" : "down"}
         />
         <KPICard
           title="Top Drug"
-          value={summary.top_drug_brand || 'N/A'}
+          value={summary.top_drug_brand || "N/A"}
           icon={<Activity className="w-6 h-6" />}
           color="orange"
           subtitle="Highest spending"
@@ -332,7 +332,7 @@ export default function DrugSpendingDashboard() {
             />
             <Tooltip
               formatter={(value: any) => formatCurrencyDetailed(value)}
-              labelStyle={{ color: '#000' }}
+              labelStyle={{ color: "#000" }}
             />
             <Legend />
             <Line
@@ -385,9 +385,9 @@ export default function DrugSpendingDashboard() {
               tick={{ fontSize: 11 }}
             />
             <Tooltip
-              formatter={(value: any, name: string, props: any) => {
-                if (name === 'total_spending') {
-                  return [formatCurrencyDetailed(value), 'Total Spending'];
+              formatter={(value: any, name: string | undefined) => {
+                if (name === "total_spending") {
+                  return [formatCurrencyDetailed(value), "Total Spending"];
                 }
                 return [value, name];
               }}
@@ -402,14 +402,14 @@ export default function DrugSpendingDashboard() {
                         <span className="font-semibold">Program:</span> {data.program}
                       </p>
                       <p className="text-sm">
-                        <span className="font-semibold">Spending:</span>{' '}
+                        <span className="font-semibold">Spending:</span>{" "}
                         {formatCurrencyDetailed(data.total_spending)}
                       </p>
                       <p className="text-sm">
-                        <span className="font-semibold">QoQ Growth:</span>{' '}
+                        <span className="font-semibold">QoQ Growth:</span>{" "}
                         <span
                           className={
-                            data.qoq_growth_pct >= 0 ? 'text-green-600' : 'text-red-600'
+                            data.qoq_growth_pct >= 0 ? "text-green-600" : "text-red-600"
                           }
                         >
                           {formatPercent(data.qoq_growth_pct)}
@@ -431,7 +431,7 @@ export default function DrugSpendingDashboard() {
               {drivers.slice(0, 20).map((entry: any, index: number) => (
                 <Bar
                   key={`bar-${index}`}
-                  fill={entry.program === 'Part D' ? '#8b5cf6' : '#3b82f6'}
+                  fill={entry.program === "Part D" ? "#8b5cf6" : "#3b82f6"}
                 />
               ))}
             </Bar>
@@ -454,9 +454,9 @@ export default function DrugSpendingDashboard() {
               content={<CustomTreemapContent />}
             >
               <Tooltip
-                formatter={(value: any, name: string) => {
-                  if (name === 'value') {
-                    return [formatCurrencyDetailed(value), 'Spending'];
+                formatter={(value: any, name: string | undefined) => {
+                  if (name === "value") {
+                    return [formatCurrencyDetailed(value), "Spending"];
                   }
                   return [value, name];
                 }}
@@ -475,45 +475,45 @@ export default function DrugSpendingDashboard() {
               <tr>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('brand_name')}
+                  onClick={() => handleSort("brand_name")}
                 >
-                  Brand Name {sortColumn === 'brand_name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  Brand Name {sortColumn === "brand_name" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('generic_name')}
+                  onClick={() => handleSort("generic_name")}
                 >
-                  Generic Name {sortColumn === 'generic_name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  Generic Name {sortColumn === "generic_name" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('program')}
+                  onClick={() => handleSort("program")}
                 >
-                  Program {sortColumn === 'program' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  Program {sortColumn === "program" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('total_spending')}
+                  onClick={() => handleSort("total_spending")}
                 >
-                  Total Spend {sortColumn === 'total_spending' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  Total Spend {sortColumn === "total_spending" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('total_claims')}
+                  onClick={() => handleSort("total_claims")}
                 >
-                  Total Claims {sortColumn === 'total_claims' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  Total Claims {sortColumn === "total_claims" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('avg_cost_per_claim')}
+                  onClick={() => handleSort("avg_cost_per_claim")}
                 >
-                  Avg Cost/Claim {sortColumn === 'avg_cost_per_claim' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  Avg Cost/Claim {sortColumn === "avg_cost_per_claim" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('qoq_growth_pct')}
+                  onClick={() => handleSort("qoq_growth_pct")}
                 >
-                  QoQ Change {sortColumn === 'qoq_growth_pct' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  QoQ Change {sortColumn === "qoq_growth_pct" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
               </tr>
             </thead>
@@ -529,9 +529,9 @@ export default function DrugSpendingDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        driver.program === 'Part D'
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-blue-100 text-blue-800'
+                        driver.program === "Part D"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-blue-100 text-blue-800"
                       }`}
                     >
                       {driver.program}
@@ -549,7 +549,7 @@ export default function DrugSpendingDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                     <span
                       className={`font-medium ${
-                        driver.qoq_growth_pct >= 0 ? 'text-green-600' : 'text-red-600'
+                        driver.qoq_growth_pct >= 0 ? "text-green-600" : "text-red-600"
                       }`}
                     >
                       {formatPercent(driver.qoq_growth_pct)}
@@ -567,11 +567,12 @@ export default function DrugSpendingDashboard() {
               onClick={() => setShowAll(!showAll)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              {showAll ? 'Show Less' : `Show All (${sortedDrivers.length} total)`}
+              {showAll ? "Show Less" : `Show All (${sortedDrivers.length} total)`}
             </button>
           </div>
         )}
       </div>
-    </>
+    </div>
+    </div>
   );
 }
