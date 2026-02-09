@@ -1,0 +1,52 @@
+name: 'healthcare_analytics'
+version: '1.0.0'
+config-version: 2
+
+# Project profile configuration
+profile: 'healthcare_analytics'
+
+# Model paths
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Target directory for compiled SQL
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Model configurations
+models:
+  healthcare_analytics:
+    # Staging models
+    staging:
+      +materialized: view
+      +schema: staging
+      bcda:
+        +tags: ["bcda", "fhir"]
+      supabase:
+        +tags: ["supabase"]
+
+    # Intermediate models
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+
+    # Marts/final models
+    marts:
+      +materialized: table
+      +schema: analytics
+
+# Seeds configuration
+seeds:
+  healthcare_analytics:
+    +schema: seeds
+
+# Snapshots configuration
+snapshots:
+  healthcare_analytics:
+    +target_schema: snapshots

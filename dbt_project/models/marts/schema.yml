@@ -1,0 +1,184 @@
+version: 2
+
+models:
+  - name: aco_performance_summary
+    description: "One row per ACO per performance year with comprehensive performance metrics including financial, quality, and utilization data"
+    columns:
+      - name: aco_id
+        description: "Unique ACO identifier"
+      - name: aco_name
+        description: "ACO name"
+      - name: aco_state
+        description: "State where ACO is located"
+      - name: performance_year
+        description: "Performance year"
+      - name: aco_track
+        description: "ACO participation track"
+      - name: total_beneficiaries
+        description: "Total assigned beneficiaries"
+      - name: benchmark_expenditure
+        description: "Total benchmark expenditure amount"
+      - name: total_expenditure
+        description: "Total actual expenditure amount"
+      - name: savings_losses
+        description: "Generated savings (positive) or losses (negative)"
+      - name: earned_shared_savings_payment
+        description: "Earned shared savings payment amount"
+      - name: savings_rate_pct
+        description: "Savings rate as a percentage of benchmark"
+      - name: cost_per_beneficiary
+        description: "Cost per beneficiary (total expenditure / total beneficiaries)"
+      - name: quality_score
+        description: "Overall quality performance score"
+      - name: performance_category
+        description: "Categorized performance: High Saver, Moderate Saver, Slight Loss, High Loss"
+      - name: quality_tier
+        description: "Quality tier: Excellent, Good, Fair, Needs Improvement"
+
+  - name: dashboard_summary
+    description: "Single row with program-wide aggregate KPIs across all ACOs"
+    columns:
+      - name: total_acos
+        description: "Total number of unique ACOs"
+      - name: acos_with_savings
+        description: "Count of ACOs with positive savings"
+      - name: acos_with_losses
+        description: "Count of ACOs with losses"
+      - name: total_beneficiaries
+        description: "Sum of all assigned beneficiaries across ACOs"
+      - name: total_benchmark_expenditure
+        description: "Sum of benchmark expenditures across all ACOs"
+      - name: total_actual_expenditure
+        description: "Sum of actual expenditures across all ACOs"
+      - name: total_savings_losses
+        description: "Total generated savings or losses"
+      - name: total_earned_shared_savings
+        description: "Total earned shared savings payments"
+      - name: avg_savings_rate_pct
+        description: "Average savings rate percentage across ACOs"
+      - name: avg_cost_per_beneficiary
+        description: "Average cost per beneficiary across ACOs"
+      - name: avg_quality_score
+        description: "Average quality score across ACOs"
+      - name: high_savers
+        description: "Count of ACOs in High Saver category"
+      - name: moderate_savers
+        description: "Count of ACOs in Moderate Saver category"
+      - name: latest_performance_year
+        description: "Most recent performance year in the data"
+
+  - name: dashboard_aco_rankings
+    description: "All ACOs ranked by savings rate with key performance metrics and multiple ranking dimensions"
+    columns:
+      - name: aco_id
+        description: "Unique ACO identifier"
+      - name: aco_name
+        description: "ACO name"
+      - name: aco_state
+        description: "State where ACO is located"
+      - name: aco_track
+        description: "ACO participation track"
+      - name: savings_rate_pct
+        description: "Savings rate as percentage of benchmark"
+      - name: savings_rate_rank
+        description: "Rank by savings rate (1 = highest savings rate)"
+      - name: total_savings_rank
+        description: "Rank by total dollar savings (1 = highest total savings)"
+      - name: quality_rank
+        description: "Rank by quality score (1 = highest quality)"
+      - name: beneficiary_rank
+        description: "Rank by beneficiary count (1 = most beneficiaries)"
+      - name: savings_rate_percentile
+        description: "Percentile rank of savings rate (0-1)"
+      - name: quality_percentile
+        description: "Percentile rank of quality score (0-1)"
+      - name: is_saving
+        description: "Flag: 1 if ACO has positive savings, 0 otherwise"
+      - name: meets_quality_threshold
+        description: "Flag: 1 if quality score >= 80, 0 otherwise"
+
+  - name: dashboard_track_comparison
+    description: "Aggregated metrics by ACO track for comparing performance across different participation models"
+    columns:
+      - name: aco_track
+        description: "ACO participation track"
+      - name: performance_year
+        description: "Performance year"
+      - name: total_acos
+        description: "Count of ACOs in this track"
+      - name: acos_with_savings
+        description: "Count of ACOs with positive savings in this track"
+      - name: acos_with_losses
+        description: "Count of ACOs with losses in this track"
+      - name: total_beneficiaries
+        description: "Sum of beneficiaries across all ACOs in this track"
+      - name: avg_beneficiaries_per_aco
+        description: "Average beneficiaries per ACO in this track"
+      - name: total_benchmark_expenditure
+        description: "Total benchmark expenditure for this track"
+      - name: total_actual_expenditure
+        description: "Total actual expenditure for this track"
+      - name: total_savings_losses
+        description: "Total savings or losses for this track"
+      - name: avg_savings_rate_pct
+        description: "Average savings rate percentage for ACOs in this track"
+      - name: avg_cost_per_beneficiary
+        description: "Average cost per beneficiary for this track"
+      - name: avg_quality_score
+        description: "Average quality score for ACOs in this track"
+      - name: pct_acos_with_savings
+        description: "Percentage of ACOs with positive savings in this track"
+      - name: median_savings_rate
+        description: "Median savings rate for this track"
+      - name: max_savings_rate
+        description: "Maximum savings rate achieved in this track"
+      - name: min_savings_rate
+        description: "Minimum savings rate in this track"
+
+  - name: member_summary
+    description: "Patient-level summary with demographics, claim counts, and total spend from BCDA data"
+    columns:
+      - name: patient_id
+        description: "Unique patient identifier from FHIR"
+      - name: first_name
+        description: "Patient first name"
+      - name: last_name
+        description: "Patient last name"
+      - name: gender
+        description: "Patient gender"
+      - name: birth_date
+        description: "Patient date of birth"
+      - name: age
+        description: "Calculated age in years"
+      - name: city
+        description: "Patient city"
+      - name: state
+        description: "Patient state"
+      - name: postal_code
+        description: "Patient postal code"
+      - name: total_claims
+        description: "Total count of claims for this patient"
+      - name: unique_claims
+        description: "Count of unique/distinct claims"
+      - name: total_submitted
+        description: "Total submitted claim amount"
+      - name: total_paid
+        description: "Total paid claim amount"
+      - name: first_service_date
+        description: "Earliest service date across all claims"
+      - name: last_service_date
+        description: "Latest service date across all claims"
+      - name: claim_type_count
+        description: "Number of distinct claim types"
+      - name: provider_count
+        description: "Number of distinct providers"
+      - name: avg_paid_per_claim
+        description: "Average paid amount per claim"
+      - name: service_period_days
+        description: "Days between first and last service date"
+      - name: has_claims
+        description: "Flag: 1 if patient has any claims, 0 otherwise"
+      - name: high_utilizer
+        description: "Flag: 1 if patient has 10+ claims, 0 otherwise"
+      - name: high_cost_member
+        description: "Flag: 1 if total paid exceeds $50,000, 0 otherwise"

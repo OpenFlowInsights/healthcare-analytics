@@ -1,0 +1,62 @@
+version: 2
+
+sources:
+  - name: cms
+    description: "CMS (Centers for Medicare & Medicaid Services) data from various sources"
+    database: DEV_DB
+    schema: RAW
+    tables:
+      - name: RAW_MSSP_ACO_PUF
+        description: "Medicare Shared Savings Program (MSSP) Accountable Care Organization (ACO) Public Use File"
+        columns:
+          - name: id
+            description: "Primary key"
+            data_type: integer
+          - name: aco_id
+            description: "ACO identifier"
+            data_type: varchar
+          - name: aco_name
+            description: "ACO name"
+            data_type: varchar
+          - name: aco_state
+            description: "State where ACO is located"
+            data_type: varchar
+          - name: agreement_period
+            description: "Agreement period"
+            data_type: varchar
+          - name: performance_year
+            description: "Performance year"
+            data_type: integer
+          - name: total_assigned_beneficiaries
+            description: "Total number of assigned beneficiaries"
+            data_type: integer
+          - name: total_benchmark_expenditures
+            description: "Total benchmark expenditures"
+            data_type: float
+          - name: total_expenditures
+            description: "Total actual expenditures"
+            data_type: float
+          - name: generated_savings_losses
+            description: "Generated savings or losses"
+            data_type: float
+          - name: earned_shared_savings
+            description: "Earned shared savings"
+            data_type: float
+          - name: loaded_at
+            description: "Timestamp when record was loaded"
+            data_type: timestamp_ntz
+
+      - name: RAW_PARTD_SPENDING_QUARTERLY
+        description: "Medicare Part D drug spending by quarter"
+
+      - name: RAW_PARTD_SPENDING_ANNUAL
+        description: "Medicare Part D drug spending by year (2019-2023)"
+
+      - name: RAW_PARTB_SPENDING_QUARTERLY
+        description: "Medicare Part B drug spending by quarter"
+
+      - name: RAW_PARTB_SPENDING_ANNUAL
+        description: "Medicare Part B drug spending by year (2019-2023)"
+
+      - name: RAW_PARTD_PRESCRIBERS_BY_DRUG
+        description: "Medicare Part D prescribers by drug (276M rows - use aggregated only)"

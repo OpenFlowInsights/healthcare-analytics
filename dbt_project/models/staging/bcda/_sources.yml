@@ -1,0 +1,39 @@
+version: 2
+
+sources:
+  - name: bcda_raw
+    description: "Raw BCDA (Beneficiary Claims Data API) data loaded from S3"
+    database: DEV_DB
+    schema: RAW
+    tables:
+      - name: RAW_BCDA_PATIENT
+        description: "FHIR Patient resources from BCDA"
+        columns:
+          - name: DATA
+            description: "VARIANT column containing FHIR Patient resource JSON"
+            data_type: variant
+
+      - name: RAW_BCDA_EXPLANATION_OF_BENEFIT
+        description: "FHIR ExplanationOfBenefit resources from BCDA"
+        columns:
+          - name: DATA
+            description: "VARIANT column containing FHIR EOB resource JSON"
+            data_type: variant
+
+      - name: RAW_BCDA_COVERAGE
+        description: "FHIR Coverage resources from BCDA"
+        columns:
+          - name: DATA
+            description: "VARIANT column containing FHIR Coverage resource JSON"
+            data_type: variant
+
+  - name: supabase_raw
+    description: "Raw data exported from Supabase"
+    database: DEV_DB
+    schema: RAW
+    tables:
+      - name: RAW_MA_ENROLLMENT
+        description: "Medicare Advantage enrollment data"
+
+      - name: RAW_MSSP_ACO_PUF
+        description: "Medicare Shared Savings Program ACO Public Use File"
