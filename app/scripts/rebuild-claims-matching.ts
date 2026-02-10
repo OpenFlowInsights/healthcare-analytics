@@ -221,7 +221,7 @@ async function main() {
   });
 
   console.log('\n✓ All models rebuilt successfully!');
-  connection.destroy();
+  connection.destroy((err) => { if (err) console.error("Error closing connection:", err); });
 }
 
 main().catch(console.error);

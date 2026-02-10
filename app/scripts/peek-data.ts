@@ -39,7 +39,9 @@ async function main() {
   const desc = await executeSql(connection, 'DESCRIBE TABLE raw_cms_partd.formulary');
   console.table(desc);
 
-  connection.destroy();
+  connection.destroy((err) => {
+    if (err) console.error('Error closing connection:', err);
+  });
 }
 
 main().catch(console.error);

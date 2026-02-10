@@ -114,7 +114,7 @@ async function main() {
   console.log('   The RXCUI bridge successfully maps ingredient-level claims');
   console.log('   to product-level formulary PA requirements.\n');
 
-  connection.destroy();
+  connection.destroy((err) => { if (err) console.error("Error closing connection:", err); });
 }
 
 main().catch(console.error);
