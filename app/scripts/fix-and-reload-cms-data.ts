@@ -91,11 +91,11 @@ async function main() {
     console.log();
 
     // Helper function to load a file
-    async function loadPipeDelimitedFile(
+    const loadPipeDelimitedFile = async (
       fileName: string,
       tableName: string,
       sourceVintage: string
-    ) {
+    ) => {
       console.log(`\nLoading: ${fileName} → ${tableName}`);
 
       const fileNameOnly = fileName.split('/').pop() || fileName;
