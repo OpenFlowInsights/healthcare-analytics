@@ -5,7 +5,7 @@ import { Database, Sparkles, Shield, Zap, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DataToolsPage() {
-  const snowqueryUrl = 'http://3.215.39.117:3002';
+  const snowqueryUrl = 'https://snowquery.vercel.app';
 
   const features = [
     {
