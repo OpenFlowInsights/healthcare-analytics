@@ -89,7 +89,8 @@ export const dashboards: Dashboard[] = [
     title: 'SnowQuery',
     description: 'Self-service SQL query interface for Snowflake data warehouse. Run custom queries and export results.',
     category: 'tools',
-    status: 'coming-soon',
+    href: '/data-tools',
+    status: 'active',
   },
 ];
 

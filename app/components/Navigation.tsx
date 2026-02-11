@@ -27,6 +27,7 @@ export default function Navigation({ variant }: NavigationProps) {
   // Links based on variant
   const lightLinks: NavLink[] = [
     { href: '/dashboards', label: 'Dashboards' },
+    { href: '/data-tools', label: 'Data Tools' },
     { href: '/blog', label: 'Blog' },
     { href: '#', label: 'About' },
   ];
