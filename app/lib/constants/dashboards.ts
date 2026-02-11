@@ -6,6 +6,7 @@ export interface Dashboard {
   href?: string;
   external?: boolean;
   status?: 'active' | 'coming-soon';
+  badge?: string;
 }
 
 export const dashboards: Dashboard[] = [
@@ -87,10 +88,12 @@ export const dashboards: Dashboard[] = [
   {
     id: 'snowquery',
     title: 'SnowQuery',
-    description: 'Self-service SQL query interface for Snowflake data warehouse. Run custom queries and export results.',
+    description: 'Natural language SQL queries for your Snowflake warehouse. Ask questions in plain English, get instant results. No SQL knowledge required.',
     category: 'tools',
-    href: '/data-tools',
+    href: 'https://snowquery.vercel.app',
+    external: true,
     status: 'active',
+    badge: 'BETA',
   },
 ];
 

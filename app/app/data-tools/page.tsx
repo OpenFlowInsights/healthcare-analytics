@@ -41,9 +41,14 @@ export default function DataToolsPage() {
               <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 rounded-2xl mb-6">
                 <Database className="w-10 h-10 text-white" />
               </div>
-              <h1 className="font-heading font-bold text-4xl sm:text-5xl text-white mb-4">
-                SnowQuery
-              </h1>
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <h1 className="font-heading font-bold text-4xl sm:text-5xl text-white">
+                  SnowQuery
+                </h1>
+                <span className="bg-white/20 text-white text-sm font-bold px-3 py-1 rounded-full">
+                  BETA
+                </span>
+              </div>
               <p className="text-xl text-gray-200 max-w-3xl mx-auto mb-8">
                 Self-service natural language query interface for your Snowflake data warehouse.
                 Ask questions in plain English and get instant insights.

@@ -1,7 +1,7 @@
 import Navigation from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { CTASection } from '@/components/marketing/CTASection';
-import { Database, BarChart3, Activity, Target, Headphones, Clock, DollarSign } from 'lucide-react';
+import { Database, BarChart3, Activity, Target, Headphones, Clock, DollarSign, Sparkles } from 'lucide-react';
 
 export const metadata = {
   title: 'Healthcare Analytics Services | Custom Dashboards & Data Warehouses | Open Flow Insights',
@@ -10,6 +10,23 @@ export const metadata = {
 
 export default function ServicesPage() {
   const services = [
+    {
+      id: 'snowquery',
+      icon: Sparkles,
+      title: 'SnowQuery — Natural Language Data Queries',
+      description: 'Ask questions in plain English, get SQL results instantly. No SQL knowledge required. Connected to your Snowflake warehouse, SnowQuery lets your team explore data without writing a single query.',
+      deliverables: [
+        'Natural language to SQL translation',
+        'Schema explorer with visual data dictionary',
+        'Admin panel for user management',
+        'Role-based access controls',
+      ],
+      timeline: 'Setup in 1 week',
+      pricing: 'Beta pricing available',
+      badge: 'BETA',
+      external: true,
+      url: 'https://snowquery.vercel.app',
+    },
     {
       id: 'data-warehousing',
       icon: Database,
@@ -115,12 +132,19 @@ export default function ServicesPage() {
                     {/* Icon & Title Column */}
                     <div className="md:w-1/3">
                       <div className="sticky top-24">
-                        <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                          <Icon className="h-8 w-8 text-blue-600" />
+                        <div className={`w-16 h-16 ${service.badge ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-blue-100'} rounded-lg flex items-center justify-center mb-4`}>
+                          <Icon className={`h-8 w-8 ${service.badge ? 'text-white' : 'text-blue-600'}`} />
                         </div>
-                        <h2 className="font-heading font-bold text-2xl text-gray-900 mb-2">
-                          {service.title}
-                        </h2>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h2 className="font-heading font-bold text-2xl text-gray-900">
+                            {service.title}
+                          </h2>
+                          {service.badge && (
+                            <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-bold px-2 py-1 rounded">
+                              {service.badge}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center space-x-4 mt-4">
                           <div className="flex items-center text-sm text-gray-600">
                             <Clock className="h-4 w-4 mr-1" />
@@ -153,9 +177,20 @@ export default function ServicesPage() {
                           ))}
                         </ul>
 
-                        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm">
-                          Request Consultation
-                        </button>
+                        {service.external ? (
+                          <a
+                            href={service.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-colors text-sm"
+                          >
+                            Try SnowQuery →
+                          </a>
+                        ) : (
+                          <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm">
+                            Request Consultation
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -23,7 +23,7 @@ export default function Navigation({ variant }: NavigationProps) {
     { href: '/dashboard', label: 'ACO Performance', external: false },
     { href: '/drug-spending', label: 'Drug Spending', external: false },
     { href: 'https://partd-dashboard.vercel.app/dashboard', label: 'Part D Analytics', external: true },
-    { href: '#', label: 'SnowQuery', disabled: true },
+    { href: 'https://snowquery.vercel.app', label: 'SnowQuery', external: true, badge: 'BETA' },
   ];
 
   return (
@@ -81,23 +81,20 @@ export default function Navigation({ variant }: NavigationProps) {
               {dashboardsOpen && (
                 <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
                   {dashboardLinks.map((link) => (
-                    link.disabled ? (
-                      <div
-                        key={link.href}
-                        className="px-4 py-2 text-sm text-gray-400 cursor-not-allowed flex items-center justify-between"
-                      >
-                        <span>{link.label}</span>
-                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">Soon</span>
-                      </div>
-                    ) : link.external ? (
+                    link.external ? (
                       <a
                         key={link.href}
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        {link.label}
+                        <span>{link.label}</span>
+                        {link.badge && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-semibold">
+                            {link.badge}
+                          </span>
+                        )}
                       </a>
                     ) : (
                       <Link
@@ -179,23 +176,20 @@ export default function Navigation({ variant }: NavigationProps) {
             <div className="px-3 py-2">
               <div className="text-sm font-semibold text-gray-900 mb-2">Dashboards</div>
               {dashboardLinks.map((link) => (
-                link.disabled ? (
-                  <div
-                    key={link.href}
-                    className="px-3 py-2 text-sm text-gray-400 flex items-center justify-between"
-                  >
-                    <span>{link.label}</span>
-                    <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">Soon</span>
-                  </div>
-                ) : link.external ? (
+                link.external ? (
                   <a
                     key={link.href}
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+                    className="flex items-center justify-between px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
                   >
-                    {link.label}
+                    <span>{link.label}</span>
+                    {link.badge && (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-semibold">
+                        {link.badge}
+                      </span>
+                    )}
                   </a>
                 ) : (
                   <Link

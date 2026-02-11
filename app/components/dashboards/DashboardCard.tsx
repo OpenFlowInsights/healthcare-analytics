@@ -24,6 +24,7 @@ export function DashboardCard({ dashboard }: DashboardCardProps) {
             </h3>
           </div>
           {isComingSoon && <Badge variant="warning">Coming Soon</Badge>}
+          {!isComingSoon && dashboard.badge && <Badge variant="info">{dashboard.badge}</Badge>}
         </div>
       </CardHeader>
       <CardContent>
