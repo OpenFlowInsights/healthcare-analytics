@@ -4,6 +4,9 @@ const nextConfig = {
     serverComponentsExternalPackages: ['snowflake-sdk'],
   },
 
+  // Increase timeout for static generation with Snowflake queries
+  staticPageGenerationTimeout: 300,
+
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

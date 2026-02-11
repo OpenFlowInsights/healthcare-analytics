@@ -1,4 +1,6 @@
 import snowflake from 'snowflake-sdk';
+import fs from 'fs';
+import path from 'path';
 
 export interface SnowflakeConfig {
   account: string;
@@ -43,11 +45,25 @@ export async function querySnowflake<T = any>(
   });
 }
 
+const getPrivateKey = (): string => {
+  // Try reading from file first (for local/server builds)
+  const keyPath = path.join(process.cwd(), 'rsa_key.p8');
+
+  if (fs.existsSync(keyPath)) {
+    console.log('[BUILD] Using private key from file');
+    return fs.readFileSync(keyPath, 'utf8');
+  }
+
+  // Fall back to environment variable (for Vercel)
+  console.log('[BUILD] Using private key from env var');
+  return (process.env.SNOWFLAKE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+};
+
 export const getSnowflakeConfig = (): SnowflakeConfig => ({
   account: process.env.SNOWFLAKE_ACCOUNT || '',
   username: process.env.SNOWFLAKE_USERNAME || '',
   authenticator: 'SNOWFLAKE_JWT',
-  privateKey: (process.env.SNOWFLAKE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  privateKey: getPrivateKey(),
   database: process.env.SNOWFLAKE_DATABASE || 'DEV_DB',
   schema: process.env.SNOWFLAKE_SCHEMA || 'STAGING_ANALYTICS',
   warehouse: process.env.SNOWFLAKE_WAREHOUSE || 'DEV_WH',
