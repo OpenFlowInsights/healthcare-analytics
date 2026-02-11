@@ -24,4 +24,21 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Staggered animation delays */
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .delay-600 {
+    animation-delay: 600ms;
+  }
+
+  .delay-800 {
+    animation-delay: 800ms;
+  }
 }
