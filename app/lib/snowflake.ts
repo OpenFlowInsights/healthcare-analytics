@@ -3,7 +3,8 @@ import snowflake from 'snowflake-sdk';
 export interface SnowflakeConfig {
   account: string;
   username: string;
-  password: string;
+  authenticator: 'SNOWFLAKE_JWT';
+  privateKey: string;
   database: string;
   schema: string;
   warehouse: string;
@@ -42,11 +43,11 @@ export async function querySnowflake<T = any>(
   });
 }
 
-console.log("[BUILD DEBUG] SNOWFLAKE_ACCOUNT =", process.env.SNOWFLAKE_ACCOUNT);
 export const getSnowflakeConfig = (): SnowflakeConfig => ({
   account: process.env.SNOWFLAKE_ACCOUNT || '',
   username: process.env.SNOWFLAKE_USERNAME || '',
-  password: process.env.SNOWFLAKE_PASSWORD || '',
+  authenticator: 'SNOWFLAKE_JWT',
+  privateKey: (process.env.SNOWFLAKE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
   database: process.env.SNOWFLAKE_DATABASE || 'DEV_DB',
   schema: process.env.SNOWFLAKE_SCHEMA || 'STAGING_ANALYTICS',
   warehouse: process.env.SNOWFLAKE_WAREHOUSE || 'DEV_WH',
