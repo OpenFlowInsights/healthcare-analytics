@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { BarChart, Users, DollarSign, TrendingUp } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export default function DashboardPage() {
   const { data: summary, isLoading } = useQuery({
@@ -36,6 +37,12 @@ export default function DashboardPage() {
       <Navigation />
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-7xl mx-auto">
+          <Breadcrumbs
+            items={[
+              { label: 'Dashboards', href: '/dashboards' },
+              { label: 'ACO Performance Dashboard' },
+            ]}
+          />
           <h1 className="text-3xl font-bold mb-8">Healthcare Analytics Dashboard</h1>
 
         {/* KPI Cards */}

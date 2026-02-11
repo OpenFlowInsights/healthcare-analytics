@@ -19,6 +19,11 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'OpenFlow Insights - Healthcare Data Analytics & SaaS Dashboards',
   description: 'Transform healthcare data into shared savings with custom ACO dashboards, Part D analytics, and risk adjustment intelligence. Built for MSSP ACOs and Medicare Advantage plans.',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

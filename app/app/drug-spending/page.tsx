@@ -25,6 +25,7 @@ import {
 } from "recharts";
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 // Helper functions
 const formatCurrency = (value: number): string => {
@@ -272,6 +273,14 @@ export default function DrugSpendingDashboard() {
     <div>
       <Navigation />
       <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <Breadcrumbs
+            items={[
+              { label: 'Dashboards', href: '/dashboards' },
+              { label: 'Drug Spending Analysis' },
+            ]}
+          />
+        </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Drug Spending Dashboard</h1>
 
       {/* Row 1: KPI Cards */}

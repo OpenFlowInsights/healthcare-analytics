@@ -1,0 +1,20 @@
+# robots.txt for Open Flow Insights
+# https://ofi-healthcare.vercel.app
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://ofi-healthcare.vercel.app/sitemap.xml
+
+# Disallow admin/internal pages if they exist
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Allow all marketing and blog content
+Allow: /
+Allow: /blog/
+Allow: /dashboards
+Allow: /data-tools
+Allow: /drug-spending

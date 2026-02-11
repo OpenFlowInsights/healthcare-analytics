@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <defs>
+    <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E5FBB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Icon: Flow waves -->
+  <g transform="translate(0, 10)">
+    <path d="M 5 15 Q 8 10, 12 15 T 19 15"
+          stroke="url(#logo-gradient)"
+          stroke-width="2"
+          stroke-linecap="round"
+          fill="none"
+          opacity="0.5"/>
+
+    <path d="M 5 11 Q 8 6, 12 11 T 19 11"
+          stroke="url(#logo-gradient)"
+          stroke-width="2"
+          stroke-linecap="round"
+          fill="none"
+          opacity="0.75"/>
+
+    <path d="M 5 19 Q 8 14, 12 19 T 19 19"
+          stroke="url(#logo-gradient)"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          fill="none"/>
+  </g>
+
+  <!-- Wordmark: OPEN FLOW INSIGHTS -->
+  <g transform="translate(30, 0)" fill="#0F172A">
+    <!-- OPEN FLOW -->
+    <text x="0" y="20" font-family="Plus Jakarta Sans, sans-serif" font-size="18" font-weight="700" letter-spacing="-0.5">
+      OPEN FLOW
+    </text>
+
+    <!-- INSIGHTS -->
+    <text x="0" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600" letter-spacing="0.05em" fill="#64748B">
+      INSIGHTS
+    </text>
+  </g>
+</svg>
