@@ -42,6 +42,7 @@ export async function querySnowflake<T = any>(
   });
 }
 
+console.log("[BUILD DEBUG] SNOWFLAKE_ACCOUNT =", process.env.SNOWFLAKE_ACCOUNT);
 export const getSnowflakeConfig = (): SnowflakeConfig => ({
   account: process.env.SNOWFLAKE_ACCOUNT || '',
   username: process.env.SNOWFLAKE_USERNAME || '',
