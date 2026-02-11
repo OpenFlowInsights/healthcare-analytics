@@ -1,15 +1,17 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionProvider } from 'next-auth/react';
-import { useState } from 'react';
 
+/**
+ * App Providers
+ *
+ * Note: React Query has been removed since all data is now fetched at build time (SSG).
+ * Only SessionProvider remains for NextAuth authentication.
+ */
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
-
   return (
     <SessionProvider>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      {children}
     </SessionProvider>
   );
 }
