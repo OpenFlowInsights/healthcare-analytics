@@ -181,7 +181,7 @@ export function getACOList(year: number): { ACO_ID: string; ACO_NAME: string; AC
       acosMap.set(row.ACO_ID, {
         ACO_ID: row.ACO_ID,
         ACO_NAME: row.ACO_NAME,
-        ACO_TRACK: row.ACO_TRACK,
+        ACO_TRACK: row.ACO_TRACK || 'Unknown',
         TOTAL_SPENDING: 0,
       });
     }
