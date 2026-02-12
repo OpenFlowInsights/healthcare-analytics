@@ -143,9 +143,9 @@ export function CategoryDetailClient({
                 <Tooltip
                   formatter={(value) => [`$${(value || 0).toLocaleString()}`, '']}
 
-                  labelFormatter={(label: string) => {
+                  labelFormatter={(label) => {
                     const item = chartData.find(d => d.name === label);
-                    return item?.fullName || label;
+                    return item?.fullName || String(label || '');
                   }}
                 />
                 <Legend />
