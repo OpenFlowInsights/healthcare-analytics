@@ -1,4 +1,4 @@
-import { fetchSubcategoryDetail, fetchAIPYears } from '@/lib/data/aip';
+import { getSubcategoryDetail, getAIPYears } from '@/lib/data/aip-static';
 import { CategoryDetailClient } from './CategoryDetailClient';
 import { notFound } from 'next/navigation';
 
@@ -14,18 +14,18 @@ interface CategoryDetailPageProps {
 /**
  * Category Detail Page - Server Component
  *
- * Shows subcategory breakdown for a specific spending category
+ * Shows subcategory breakdown for a specific spending category (uses static JSON data)
  */
-export default async function CategoryDetailPage({
+export default function CategoryDetailPage({
   params,
   searchParams,
 }: CategoryDetailPageProps) {
   const category = decodeURIComponent(params.slug);
-  const years = await fetchAIPYears();
+  const years = getAIPYears();
   const year = searchParams.year ? Number(searchParams.year) : years[0];
 
-  // Fetch subcategory data
-  const subcategories = await fetchSubcategoryDetail(category, year);
+  // Load static subcategory data
+  const subcategories = getSubcategoryDetail(category, year);
 
   if (subcategories.length === 0) {
     notFound();

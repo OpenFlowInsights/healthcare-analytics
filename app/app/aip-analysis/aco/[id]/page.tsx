@@ -1,4 +1,4 @@
-import { fetchACOProfile, fetchAIPYears } from '@/lib/data/aip';
+import { getACOProfile, getAIPYears } from '@/lib/data/aip-static';
 import { ACOProfileClient } from './ACOProfileClient';
 import { notFound } from 'next/navigation';
 
@@ -14,18 +14,18 @@ interface ACOProfilePageProps {
 /**
  * ACO Profile Page - Server Component
  *
- * Shows detailed ACO profile with spending breakdown and performance metrics
+ * Shows detailed ACO profile with spending breakdown and performance metrics (uses static JSON data)
  */
-export default async function ACOProfilePage({
+export default function ACOProfilePage({
   params,
   searchParams,
 }: ACOProfilePageProps) {
   const acoId = params.id;
-  const years = await fetchAIPYears();
+  const years = getAIPYears();
   const year = searchParams.year ? Number(searchParams.year) : years[0];
 
-  // Fetch ACO profile
-  const profile = await fetchACOProfile(acoId, year);
+  // Load static ACO profile
+  const profile = getACOProfile(acoId, year);
 
   if (!profile) {
     notFound();

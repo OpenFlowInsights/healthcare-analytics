@@ -1,4 +1,4 @@
-import { fetchACOList, fetchAIPYears } from '@/lib/data/aip';
+import { getACOList, getAIPYears } from '@/lib/data/aip-static';
 import { ACOListClient } from './ACOListClient';
 
 interface ACOListPageProps {
@@ -10,14 +10,14 @@ interface ACOListPageProps {
 /**
  * ACO List Page - Server Component
  *
- * Shows list of all ACOs with AIP data
+ * Shows list of all ACOs with AIP data (uses static JSON data)
  */
-export default async function ACOListPage({ searchParams }: ACOListPageProps) {
-  const years = await fetchAIPYears();
+export default function ACOListPage({ searchParams }: ACOListPageProps) {
+  const years = getAIPYears();
   const year = searchParams.year ? Number(searchParams.year) : years[0];
 
-  // Fetch ACO list
-  const acos = await fetchACOList(year);
+  // Load static ACO list
+  const acos = getACOList(year);
 
   return <ACOListClient year={year} years={years} acos={acos} />;
 }
