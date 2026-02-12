@@ -38,6 +38,15 @@ export const dashboards: Dashboard[] = [
     status: 'active',
     badge: 'NEW',
   },
+  {
+    id: 'aip-performance',
+    title: 'AIP Performance Analysis',
+    description: 'Category spending breakdown with ACO shared savings rates and performance correlation',
+    category: 'aco',
+    href: '/aip-analysis/performance',
+    status: 'active',
+    badge: 'NEW',
+  },
 
   // Part D Category
   {
