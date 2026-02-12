@@ -113,14 +113,14 @@ export async function fetchDashboardSummary(year: number): Promise<DashboardSumm
     SELECT
       ${year} as PERFORMANCE_YEAR,
       COUNT(DISTINCT "aco_id") as TOTAL_ACOS,
-      COUNT(DISTINCT CASE WHEN TRY_CAST("sav_rate" AS FLOAT) > 0 THEN "aco_id" END) as ACOS_WITH_SAVINGS,
-      COUNT(DISTINCT CASE WHEN TRY_CAST("sav_rate" AS FLOAT) < 0 THEN "aco_id" END) as ACOS_WITH_LOSSES,
+      COUNT(DISTINCT CASE WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) > 0 THEN "aco_id" END) as ACOS_WITH_SAVINGS,
+      COUNT(DISTINCT CASE WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) < 0 THEN "aco_id" END) as ACOS_WITH_LOSSES,
       SUM(TRY_CAST(REPLACE(REPLACE("n_ab", ',', ''), '$', '') AS INTEGER)) as TOTAL_BENEFICIARIES,
       SUM(TRY_CAST(REPLACE(REPLACE("abtotbnchmk", ',', ''), '$', '') AS DECIMAL(18,2))) as TOTAL_BENCHMARK_EXPENDITURE,
       SUM(TRY_CAST(REPLACE(REPLACE("abtotexp", ',', ''), '$', '') AS DECIMAL(18,2))) as TOTAL_ACTUAL_EXPENDITURE,
       SUM(TRY_CAST(REPLACE(REPLACE("gensaveloss", ',', ''), '$', '') AS DECIMAL(18,2))) as TOTAL_SAVINGS_LOSSES,
-      AVG(TRY_CAST("sav_rate" AS FLOAT)) as AVG_SAVINGS_RATE_PCT,
-      AVG(TRY_CAST("qualscore" AS FLOAT)) as AVG_QUALITY_SCORE
+      AVG(TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT)) as AVG_SAVINGS_RATE_PCT,
+      AVG(TRY_CAST(REPLACE("qualscore", '%', '') AS FLOAT)) as AVG_QUALITY_SCORE
     FROM ${config.database}.${config.schema}.ACO_PUF
     WHERE "performance_year" = ${year}
   `;
@@ -229,14 +229,14 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
 
       -- Basic counts
       TRY_CAST(REPLACE(REPLACE("n_ab", ',', ''), '$', '') AS INTEGER) as TOTAL_BENEFICIARIES,
-      TRY_CAST("sav_rate" AS FLOAT) as SAVINGS_RATE_PCT,
-      TRY_CAST("qualscore" AS FLOAT) as QUALITY_SCORE,
-      ROW_NUMBER() OVER (ORDER BY TRY_CAST("sav_rate" AS FLOAT) DESC NULLS LAST) as SAVINGS_RATE_RANK,
+      TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) as SAVINGS_RATE_PCT,
+      TRY_CAST(REPLACE("qualscore", '%', '') AS FLOAT) as QUALITY_SCORE,
+      ROW_NUMBER() OVER (ORDER BY TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) DESC NULLS LAST) as SAVINGS_RATE_RANK,
       CASE
-        WHEN TRY_CAST("sav_rate" AS FLOAT) > 5 THEN 'High Saver'
-        WHEN TRY_CAST("sav_rate" AS FLOAT) BETWEEN 0 AND 5 THEN 'Moderate Saver'
-        WHEN TRY_CAST("sav_rate" AS FLOAT) BETWEEN -5 AND 0 THEN 'Slight Loss'
-        WHEN TRY_CAST("sav_rate" AS FLOAT) < -5 THEN 'High Loss'
+        WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) > 5 THEN 'High Saver'
+        WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) BETWEEN 0 AND 5 THEN 'Moderate Saver'
+        WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) BETWEEN -5 AND 0 THEN 'Slight Loss'
+        WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) < -5 THEN 'High Loss'
         ELSE 'Unknown'
       END as PERFORMANCE_CATEGORY,
 
@@ -269,7 +269,7 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
       TRY_CAST(REPLACE(REPLACE("n_rhc", ',', ''), '$', '') AS INTEGER) as NUM_RHCS,
       TRY_CAST(REPLACE(REPLACE("n_hosp", ',', ''), '$', '') AS INTEGER) as NUM_HOSPITALS
     FROM deduplicated
-    ORDER BY TRY_CAST("sav_rate" AS FLOAT) DESC NULLS LAST
+    ORDER BY TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) DESC NULLS LAST
   `;
 
   const data = await querySnowflake<ACORanking>(sql, config);
@@ -309,11 +309,11 @@ export async function fetchACODetails(acoId: string, year: number) {
       TRY_CAST(REPLACE(REPLACE("abtotexp", ',', ''), '$', '') AS DECIMAL(18,2)) as TOTAL_EXPENDITURE,
       TRY_CAST(REPLACE(REPLACE("gensaveloss", ',', ''), '$', '') AS DECIMAL(18,2)) as SAVINGS_LOSSES,
       TRY_CAST(REPLACE(REPLACE("earnsaveloss", ',', ''), '$', '') AS DECIMAL(18,2)) as EARNED_SHARED_SAVINGS_PAYMENT,
-      TRY_CAST("sav_rate" AS FLOAT) as SAVINGS_RATE_PCT,
+      TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) as SAVINGS_RATE_PCT,
       "per_capita_exp_total_py" as COST_PER_BENEFICIARY,
 
       -- Quality and risk
-      TRY_CAST("qualscore" AS FLOAT) as QUALITY_SCORE,
+      TRY_CAST(REPLACE("qualscore", '%', '') AS FLOAT) as QUALITY_SCORE,
       TRY_CAST("cms_hcc_riskscore_agnd_py" AS DECIMAL(6,4)) as RISK_SCORE_AGED_NON_DUAL,
       TRY_CAST("cms_hcc_riskscore_agdu_py" AS DECIMAL(6,4)) as RISK_SCORE_AGED_DUAL,
       TRY_CAST("cms_hcc_riskscore_dis_py" AS DECIMAL(6,4)) as RISK_SCORE_DISABLED,

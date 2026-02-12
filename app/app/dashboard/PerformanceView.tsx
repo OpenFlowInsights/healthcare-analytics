@@ -124,8 +124,7 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(aco =>
-        aco.ACO_NAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        aco.ACO_STATE.toLowerCase().includes(searchTerm.toLowerCase())
+        aco.ACO_NAME.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -578,12 +577,6 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
                 >
                   ACO Name {sortColumn === 'ACO_NAME' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
-                <th
-                  className="text-left py-3 px-4 cursor-pointer hover:bg-gray-50"
-                  onClick={() => handleSort('ACO_STATE')}
-                >
-                  State {sortColumn === 'ACO_STATE' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
                 <th className="text-left py-3 px-4">Track</th>
                 <th
                   className="text-right py-3 px-4 cursor-pointer hover:bg-gray-50"
@@ -614,7 +607,6 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
                 >
                   <td className="py-3 px-4">{index + 1}</td>
                   <td className="py-3 px-4">{aco.ACO_NAME}</td>
-                  <td className="py-3 px-4">{aco.ACO_STATE}</td>
                   <td className="py-3 px-4">{aco.ACO_TRACK}</td>
                   <td className="py-3 px-4 text-right">
                     {aco.TOTAL_BENEFICIARIES?.toLocaleString()}

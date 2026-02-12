@@ -13,12 +13,13 @@ interface ComparisonViewProps {
 
 interface Filters {
   tracks: string[];
-  states: string[];
   minBeneficiaries?: number;
   maxBeneficiaries?: number;
   hasFQHCs?: boolean;
   minFQHCPct?: number;
   maxFQHCPct?: number;
+  contractStartYears: number[];
+  currentPerformanceYears: number[];
 }
 
 interface ComparisonMetric {
@@ -41,20 +42,75 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     tracks: [],
-    states: [],
+    contractStartYears: [],
+    currentPerformanceYears: [],
   });
+
+  // Calculate contract start year (first year ACO appears) and current performance year (last year ACO appears)
+  const acoYearData = useMemo(() => {
+    const yearMap: Record<string, { contractStartYear: number; currentPerformanceYear: number }> = {};
+
+    years.forEach(year => {
+      const yearData = dataByYear[year];
+      yearData?.rankings.forEach(aco => {
+        if (!yearMap[aco.ACO_ID]) {
+          yearMap[aco.ACO_ID] = {
+            contractStartYear: year,
+            currentPerformanceYear: year,
+          };
+        } else {
+          yearMap[aco.ACO_ID].contractStartYear = Math.min(yearMap[aco.ACO_ID].contractStartYear, year);
+          yearMap[aco.ACO_ID].currentPerformanceYear = Math.max(yearMap[aco.ACO_ID].currentPerformanceYear, year);
+        }
+      });
+    });
+
+    return yearMap;
+  }, [years, dataByYear]);
 
   // Get unique values for filters
   const availableTracks = useMemo(() => {
     return Array.from(new Set(allACOs.map(aco => aco.ACO_TRACK).filter(Boolean))).sort();
   }, [allACOs]);
 
-  const availableStates = useMemo(() => {
-    return Array.from(new Set(allACOs.map(aco => aco.ACO_STATE).filter(Boolean))).sort();
-  }, [allACOs]);
+  const availableContractStartYears = useMemo(() => {
+    const startYears = allACOs
+      .map(aco => acoYearData[aco.ACO_ID]?.contractStartYear)
+      .filter(Boolean);
+    return Array.from(new Set(startYears)).sort((a, b) => b - a);
+  }, [allACOs, acoYearData]);
+
+  const availableCurrentPerformanceYears = useMemo(() => {
+    const perfYears = allACOs
+      .map(aco => acoYearData[aco.ACO_ID]?.currentPerformanceYear)
+      .filter(Boolean);
+    return Array.from(new Set(perfYears)).sort((a, b) => b - a);
+  }, [allACOs, acoYearData]);
 
   // Find selected ACO
   const focusACO = allACOs.find(aco => aco.ACO_ID === selectedACOId);
+
+  // Get 3-year performance history for selected ACO
+  const historicalPerformance = useMemo(() => {
+    if (!selectedACOId) return [];
+
+    // Get last 3 years (current year and 2 prior)
+    const last3Years = years
+      .filter(year => year <= selectedYear)
+      .sort((a, b) => b - a)
+      .slice(0, 3)
+      .reverse(); // Display oldest to newest
+
+    return last3Years.map(year => {
+      const yearData = dataByYear[year];
+      const acoData = yearData?.rankings.find(aco => aco.ACO_ID === selectedACOId);
+
+      return {
+        year,
+        data: acoData || null,
+      };
+    }).filter(item => item.data !== null);
+  }, [selectedACOId, years, selectedYear, dataByYear]);
 
   // Filter ACOs for search
   const searchedACOs = useMemo(() => {
@@ -62,8 +118,7 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
 
     return allACOs.filter(aco =>
       aco.ACO_NAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      aco.ACO_ID.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      aco.ACO_STATE.toLowerCase().includes(searchTerm.toLowerCase())
+      aco.ACO_ID.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [allACOs, searchTerm]);
 
@@ -74,11 +129,6 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
     // Track filter
     if (filters.tracks.length > 0) {
       filtered = filtered.filter(aco => filters.tracks.includes(aco.ACO_TRACK));
-    }
-
-    // State filter
-    if (filters.states.length > 0) {
-      filtered = filtered.filter(aco => filters.states.includes(aco.ACO_STATE));
     }
 
     // Beneficiary count filter
@@ -112,8 +162,24 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
       });
     }
 
+    // Contract start year filter
+    if (filters.contractStartYears.length > 0) {
+      filtered = filtered.filter(aco => {
+        const startYear = acoYearData[aco.ACO_ID]?.contractStartYear;
+        return startYear !== undefined && filters.contractStartYears.includes(startYear);
+      });
+    }
+
+    // Current performance year filter
+    if (filters.currentPerformanceYears.length > 0) {
+      filtered = filtered.filter(aco => {
+        const currentYear = acoYearData[aco.ACO_ID]?.currentPerformanceYear;
+        return currentYear !== undefined && filters.currentPerformanceYears.includes(currentYear);
+      });
+    }
+
     return filtered;
-  }, [allACOs, selectedACOId, filters]);
+  }, [allACOs, selectedACOId, filters, acoYearData]);
 
   // Calculate statistics for a metric
   const calculateStats = (getValue: (aco: ACORanking) => number | null): ComparisonMetric | null => {
@@ -188,20 +254,13 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
   );
 
   // Toggle filter
-  const toggleFilter = (type: 'track' | 'state', value: string) => {
+  const toggleFilter = (type: 'track', value: string) => {
     if (type === 'track') {
       setFilters(prev => ({
         ...prev,
         tracks: prev.tracks.includes(value)
           ? prev.tracks.filter(t => t !== value)
           : [...prev.tracks, value],
-      }));
-    } else {
-      setFilters(prev => ({
-        ...prev,
-        states: prev.states.includes(value)
-          ? prev.states.filter(s => s !== value)
-          : [...prev.states, value],
       }));
     }
   };
@@ -210,10 +269,11 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
   const clearFilters = () => {
     setFilters({
       tracks: [],
-      states: [],
       hasFQHCs: undefined,
       minFQHCPct: undefined,
       maxFQHCPct: undefined,
+      contractStartYears: [],
+      currentPerformanceYears: [],
     });
   };
 
@@ -299,7 +359,7 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by ACO name, ID, or state..."
+            placeholder="Search by ACO name or ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -327,7 +387,7 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
               >
                 <div className="font-medium">{aco.ACO_NAME}</div>
                 <div className="text-xs text-gray-500">
-                  {aco.ACO_ID} • {aco.ACO_STATE} • {aco.ACO_TRACK}
+                  {aco.ACO_ID} • {aco.ACO_TRACK}
                 </div>
               </button>
             ))}
@@ -340,9 +400,140 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
             <div className="space-y-1 text-sm">
               <div><span className="font-medium">Name:</span> {focusACO.ACO_NAME}</div>
               <div><span className="font-medium">ID:</span> {focusACO.ACO_ID}</div>
-              <div><span className="font-medium">State:</span> {focusACO.ACO_STATE}</div>
               <div><span className="font-medium">Track:</span> {focusACO.ACO_TRACK}</div>
               <div><span className="font-medium">Beneficiaries:</span> {focusACO.TOTAL_BENEFICIARIES?.toLocaleString()}</div>
+            </div>
+          </div>
+        )}
+
+        {/* 3-Year Performance Trend */}
+        {focusACO && historicalPerformance.length > 0 && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4 mt-4">
+            <h3 className="font-semibold text-gray-900 mb-3">3-Year Performance Trend</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 px-2 font-medium text-gray-700">Metric</th>
+                    {historicalPerformance.map(({ year }) => (
+                      <th key={year} className="text-right py-2 px-2 font-medium text-gray-700">
+                        PY {year}
+                      </th>
+                    ))}
+                    <th className="text-right py-2 px-2 font-medium text-gray-700">Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Savings Rate Row */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2 px-2 text-gray-700">Savings Rate</td>
+                    {historicalPerformance.map(({ year, data }) => (
+                      <td key={year} className="text-right py-2 px-2">
+                        {data?.SAVINGS_RATE_PCT?.toFixed(2)}%
+                      </td>
+                    ))}
+                    <td className="text-right py-2 px-2">
+                      {historicalPerformance.length >= 2 && (() => {
+                        const oldest = historicalPerformance[0].data?.SAVINGS_RATE_PCT;
+                        const newest = historicalPerformance[historicalPerformance.length - 1].data?.SAVINGS_RATE_PCT;
+                        if (oldest !== undefined && newest !== undefined) {
+                          const change = newest - oldest;
+                          const isPositive = change > 0;
+                          return (
+                            <span className={`flex items-center justify-end gap-1 ${isPositive ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                              {isPositive ? <TrendingUp className="h-3 w-3" /> : change < 0 ? <TrendingDown className="h-3 w-3" /> : '—'}
+                              {change.toFixed(2)}%
+                            </span>
+                          );
+                        }
+                        return '—';
+                      })()}
+                    </td>
+                  </tr>
+
+                  {/* Quality Score Row */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2 px-2 text-gray-700">Quality Score</td>
+                    {historicalPerformance.map(({ year, data }) => (
+                      <td key={year} className="text-right py-2 px-2">
+                        {data?.QUALITY_SCORE?.toFixed(2)}%
+                      </td>
+                    ))}
+                    <td className="text-right py-2 px-2">
+                      {historicalPerformance.length >= 2 && (() => {
+                        const oldest = historicalPerformance[0].data?.QUALITY_SCORE;
+                        const newest = historicalPerformance[historicalPerformance.length - 1].data?.QUALITY_SCORE;
+                        if (oldest !== undefined && newest !== undefined) {
+                          const change = newest - oldest;
+                          const isPositive = change > 0;
+                          return (
+                            <span className={`flex items-center justify-end gap-1 ${isPositive ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                              {isPositive ? <TrendingUp className="h-3 w-3" /> : change < 0 ? <TrendingDown className="h-3 w-3" /> : '—'}
+                              {change.toFixed(2)}%
+                            </span>
+                          );
+                        }
+                        return '—';
+                      })()}
+                    </td>
+                  </tr>
+
+                  {/* Beneficiaries Row */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2 px-2 text-gray-700">Beneficiaries</td>
+                    {historicalPerformance.map(({ year, data }) => (
+                      <td key={year} className="text-right py-2 px-2">
+                        {data?.TOTAL_BENEFICIARIES?.toLocaleString()}
+                      </td>
+                    ))}
+                    <td className="text-right py-2 px-2">
+                      {historicalPerformance.length >= 2 && (() => {
+                        const oldest = historicalPerformance[0].data?.TOTAL_BENEFICIARIES;
+                        const newest = historicalPerformance[historicalPerformance.length - 1].data?.TOTAL_BENEFICIARIES;
+                        if (oldest !== undefined && newest !== undefined) {
+                          const change = newest - oldest;
+                          const pctChange = (change / oldest) * 100;
+                          const isPositive = change > 0;
+                          return (
+                            <span className={`flex items-center justify-end gap-1 ${isPositive ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                              {isPositive ? <TrendingUp className="h-3 w-3" /> : change < 0 ? <TrendingDown className="h-3 w-3" /> : '—'}
+                              {change.toLocaleString()} ({pctChange.toFixed(1)}%)
+                            </span>
+                          );
+                        }
+                        return '—';
+                      })()}
+                    </td>
+                  </tr>
+
+                  {/* Savings/Losses Row */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2 px-2 text-gray-700">Savings/Losses</td>
+                    {historicalPerformance.map(({ year, data }) => (
+                      <td key={year} className="text-right py-2 px-2">
+                        ${(data?.SAVINGS_LOSSES ? data.SAVINGS_LOSSES / 1000000 : 0).toFixed(1)}M
+                      </td>
+                    ))}
+                    <td className="text-right py-2 px-2">
+                      {historicalPerformance.length >= 2 && (() => {
+                        const oldest = historicalPerformance[0].data?.SAVINGS_LOSSES;
+                        const newest = historicalPerformance[historicalPerformance.length - 1].data?.SAVINGS_LOSSES;
+                        if (oldest !== undefined && newest !== undefined) {
+                          const change = newest - oldest;
+                          const isPositive = change > 0;
+                          return (
+                            <span className={`flex items-center justify-end gap-1 ${isPositive ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                              {isPositive ? <TrendingUp className="h-3 w-3" /> : change < 0 ? <TrendingDown className="h-3 w-3" /> : '—'}
+                              ${(change / 1000000).toFixed(1)}M
+                            </span>
+                          );
+                        }
+                        return '—';
+                      })()}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -367,7 +558,7 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
               <span className="font-medium">
                 Comparing against <span className="text-blue-600">{comparisonGroup.length}</span> ACOs
               </span>
-              {(filters.tracks.length > 0 || filters.states.length > 0 || filters.hasFQHCs !== undefined || filters.minFQHCPct !== undefined || filters.maxFQHCPct !== undefined) && (
+              {(filters.tracks.length > 0 || filters.hasFQHCs !== undefined || filters.minFQHCPct !== undefined || filters.maxFQHCPct !== undefined || filters.contractStartYears.length > 0 || filters.currentPerformanceYears.length > 0) && (
                 <button
                   onClick={clearFilters}
                   className="text-blue-600 hover:text-blue-700 underline"
@@ -394,26 +585,6 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
                         }`}
                       >
                         {track}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* State Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                    {availableStates.map(state => (
-                      <button
-                        key={state}
-                        onClick={() => toggleFilter('state', state)}
-                        className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                          filters.states.includes(state)
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
-                        }`}
-                      >
-                        {state}
                       </button>
                     ))}
                   </div>
@@ -533,6 +704,56 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Contract Start Year Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Contract Start Year</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableContractStartYears.map(year => (
+                      <button
+                        key={year}
+                        onClick={() => setFilters(prev => ({
+                          ...prev,
+                          contractStartYears: prev.contractStartYears.includes(year)
+                            ? prev.contractStartYears.filter(y => y !== year)
+                            : [...prev.contractStartYears, year],
+                        }))}
+                        className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                          filters.contractStartYears.includes(year)
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Current Performance Year Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Performance Year</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableCurrentPerformanceYears.map(year => (
+                      <button
+                        key={year}
+                        onClick={() => setFilters(prev => ({
+                          ...prev,
+                          currentPerformanceYears: prev.currentPerformanceYears.includes(year)
+                            ? prev.currentPerformanceYears.filter(y => y !== year)
+                            : [...prev.currentPerformanceYears, year],
+                        }))}
+                        className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                          filters.currentPerformanceYears.includes(year)
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
