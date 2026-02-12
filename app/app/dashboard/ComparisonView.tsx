@@ -16,6 +16,9 @@ interface Filters {
   states: string[];
   minBeneficiaries?: number;
   maxBeneficiaries?: number;
+  hasFQHCs?: boolean;
+  minFQHCPct?: number;
+  maxFQHCPct?: number;
 }
 
 interface ComparisonMetric {
@@ -84,6 +87,29 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
     }
     if (filters.maxBeneficiaries !== undefined) {
       filtered = filtered.filter(aco => aco.TOTAL_BENEFICIARIES <= filters.maxBeneficiaries!);
+    }
+
+    // FQHC filters
+    if (filters.hasFQHCs !== undefined) {
+      filtered = filtered.filter(aco => {
+        const hasFQHCs = (aco.NUM_FQHCS || 0) > 0;
+        return hasFQHCs === filters.hasFQHCs;
+      });
+    }
+
+    // FQHC percentage filter
+    if (filters.minFQHCPct !== undefined || filters.maxFQHCPct !== undefined) {
+      filtered = filtered.filter(aco => {
+        const totalProviders = (aco.NUM_PCPS || 0) + (aco.NUM_SPECIALISTS || 0) + (aco.NUM_FQHCS || 0) + (aco.NUM_RHCS || 0);
+        if (totalProviders === 0) return false;
+
+        const fqhcPct = ((aco.NUM_FQHCS || 0) / totalProviders) * 100;
+
+        if (filters.minFQHCPct !== undefined && fqhcPct < filters.minFQHCPct) return false;
+        if (filters.maxFQHCPct !== undefined && fqhcPct > filters.maxFQHCPct) return false;
+
+        return true;
+      });
     }
 
     return filtered;
@@ -182,7 +208,13 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
 
   // Clear filters
   const clearFilters = () => {
-    setFilters({ tracks: [], states: [] });
+    setFilters({
+      tracks: [],
+      states: [],
+      hasFQHCs: undefined,
+      minFQHCPct: undefined,
+      maxFQHCPct: undefined,
+    });
   };
 
   // Metric display component
@@ -335,7 +367,7 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
               <span className="font-medium">
                 Comparing against <span className="text-blue-600">{comparisonGroup.length}</span> ACOs
               </span>
-              {(filters.tracks.length > 0 || filters.states.length > 0) && (
+              {(filters.tracks.length > 0 || filters.states.length > 0 || filters.hasFQHCs !== undefined || filters.minFQHCPct !== undefined || filters.maxFQHCPct !== undefined) && (
                 <button
                   onClick={clearFilters}
                   className="text-blue-600 hover:text-blue-700 underline"
@@ -416,6 +448,90 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
                         }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                       />
+                    </div>
+                  </div>
+                </div>
+
+                {/* FQHC Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    FQHC Participation
+                  </label>
+                  <div className="space-y-3">
+                    {/* Has FQHCs toggle */}
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm text-gray-600">Includes FQHCs:</label>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setFilters(prev => ({
+                            ...prev,
+                            hasFQHCs: prev.hasFQHCs === true ? undefined : true,
+                          }))}
+                          className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                            filters.hasFQHCs === true
+                              ? 'bg-green-600 text-white border-green-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:border-green-400'
+                          }`}
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={() => setFilters(prev => ({
+                            ...prev,
+                            hasFQHCs: prev.hasFQHCs === false ? undefined : false,
+                          }))}
+                          className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                            filters.hasFQHCs === false
+                              ? 'bg-red-600 text-white border-red-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:border-red-400'
+                          }`}
+                        >
+                          No
+                        </button>
+                        {filters.hasFQHCs !== undefined && (
+                          <button
+                            onClick={() => setFilters(prev => ({ ...prev, hasFQHCs: undefined }))}
+                            className="px-3 py-1 text-xs rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100"
+                          >
+                            Any
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* FQHC Percentage Range */}
+                    <div>
+                      <label className="text-sm text-gray-600 mb-2 block">FQHC % of Network:</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <input
+                            type="number"
+                            placeholder="Min %"
+                            min="0"
+                            max="100"
+                            value={filters.minFQHCPct || ''}
+                            onChange={(e) => setFilters(prev => ({
+                              ...prev,
+                              minFQHCPct: e.target.value ? Number(e.target.value) : undefined,
+                            }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="number"
+                            placeholder="Max %"
+                            min="0"
+                            max="100"
+                            value={filters.maxFQHCPct || ''}
+                            onChange={(e) => setFilters(prev => ({
+                              ...prev,
+                              maxFQHCPct: e.target.value ? Number(e.target.value) : undefined,
+                            }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -624,7 +740,17 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
                     <div className="text-2xl font-bold text-green-900">
                       {focusACO.NUM_FQHCS.toLocaleString()}
                     </div>
-                    <div className="text-xs text-green-600 mt-1">Sites</div>
+                    <div className="text-xs text-green-600 mt-1">
+                      Sites
+                      {(() => {
+                        const totalProviders = (focusACO.NUM_PCPS || 0) + (focusACO.NUM_SPECIALISTS || 0) + (focusACO.NUM_FQHCS || 0) + (focusACO.NUM_RHCS || 0);
+                        if (totalProviders > 0) {
+                          const pct = ((focusACO.NUM_FQHCS || 0) / totalProviders * 100).toFixed(1);
+                          return ` (${pct}%)`;
+                        }
+                        return '';
+                      })()}
+                    </div>
                   </div>
                 )}
                 {focusACO.NUM_RHCS !== undefined && focusACO.NUM_RHCS > 0 && (
