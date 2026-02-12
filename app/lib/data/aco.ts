@@ -188,7 +188,6 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
         "p_snf_adm",
         "snf_payperstay",
         "p_edv_vis_hosp",
-        "snf_waiver_ind",
         -- Provider counts
         "n_pcp",
         "n_spec",
@@ -230,7 +229,6 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
         MAX("p_snf_adm") as "p_snf_adm",
         MAX("snf_payperstay") as "snf_payperstay",
         MAX("p_edv_vis_hosp") as "p_edv_vis_hosp",
-        MAX("snf_waiver_ind") as "snf_waiver_ind",
         -- Provider counts
         MAX("n_pcp") as "n_pcp",
         MAX("n_spec") as "n_spec",
@@ -241,72 +239,66 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
       GROUP BY "aco_id"
     )
     SELECT
-      "aco_id" as ACO_ID,
-      "aco_name" as ACO_NAME,
-      COALESCE("aco_state", 'Unknown') as ACO_STATE,
-      COALESCE("current_track", 'Unknown') as ACO_TRACK,
-      "performance_year" as PERFORMANCE_YEAR,
+      deduplicated."aco_id" as ACO_ID,
+      deduplicated."aco_name" as ACO_NAME,
+      COALESCE(deduplicated."aco_state", 'Unknown') as ACO_STATE,
+      COALESCE(deduplicated."current_track", 'Unknown') as ACO_TRACK,
+      deduplicated."performance_year" as PERFORMANCE_YEAR,
 
       -- Basic counts
-      TRY_CAST(REPLACE(REPLACE("n_ab", ',', ''), '$', '') AS INTEGER) as TOTAL_BENEFICIARIES,
-      TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) as SAVINGS_RATE_PCT,
-      TRY_CAST(REPLACE("qualscore", '%', '') AS FLOAT) as QUALITY_SCORE,
-      ROW_NUMBER() OVER (ORDER BY TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) DESC NULLS LAST) as SAVINGS_RATE_RANK,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_ab", ',', ''), '$', '') AS INTEGER) as TOTAL_BENEFICIARIES,
+      TRY_CAST(REPLACE(deduplicated."sav_rate", '%', '') AS FLOAT) as SAVINGS_RATE_PCT,
+      TRY_CAST(REPLACE(deduplicated."qualscore", '%', '') AS FLOAT) as QUALITY_SCORE,
+      ROW_NUMBER() OVER (ORDER BY TRY_CAST(REPLACE(deduplicated."sav_rate", '%', '') AS FLOAT) DESC NULLS LAST) as SAVINGS_RATE_RANK,
       CASE
-        WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) > 5 THEN 'High Saver'
-        WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) BETWEEN 0 AND 5 THEN 'Moderate Saver'
-        WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) BETWEEN -5 AND 0 THEN 'Slight Loss'
-        WHEN TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) < -5 THEN 'High Loss'
+        WHEN TRY_CAST(REPLACE(deduplicated."sav_rate", '%', '') AS FLOAT) > 5 THEN 'High Saver'
+        WHEN TRY_CAST(REPLACE(deduplicated."sav_rate", '%', '') AS FLOAT) BETWEEN 0 AND 5 THEN 'Moderate Saver'
+        WHEN TRY_CAST(REPLACE(deduplicated."sav_rate", '%', '') AS FLOAT) BETWEEN -5 AND 0 THEN 'Slight Loss'
+        WHEN TRY_CAST(REPLACE(deduplicated."sav_rate", '%', '') AS FLOAT) < -5 THEN 'High Loss'
         ELSE 'Unknown'
       END as PERFORMANCE_CATEGORY,
 
       -- Beneficiary breakdown
-      TRY_CAST(REPLACE(REPLACE("n_ab_year_aged_nondual_py", ',', ''), '$', '') AS INTEGER) as AGED_NONDUAL_BENES,
-      TRY_CAST(REPLACE(REPLACE("n_ab_year_aged_dual_py", ',', ''), '$', '') AS INTEGER) as AGED_DUAL_BENES,
-      TRY_CAST(REPLACE(REPLACE("n_ab_year_dis_py", ',', ''), '$', '') AS INTEGER) as DISABLED_BENES,
-      TRY_CAST(REPLACE(REPLACE("n_ab_year_esrd_py", ',', ''), '$', '') AS INTEGER) as ESRD_BENES,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_ab_year_aged_nondual_py", ',', ''), '$', '') AS INTEGER) as AGED_NONDUAL_BENES,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_ab_year_aged_dual_py", ',', ''), '$', '') AS INTEGER) as AGED_DUAL_BENES,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_ab_year_dis_py", ',', ''), '$', '') AS INTEGER) as DISABLED_BENES,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_ab_year_esrd_py", ',', ''), '$', '') AS INTEGER) as ESRD_BENES,
 
       -- Financial metrics
-      TRY_CAST(REPLACE(REPLACE("abtotbnchmk", ',', ''), '$', '') AS DECIMAL(18,2)) as BENCHMARK_EXPENDITURE,
-      TRY_CAST(REPLACE(REPLACE("abtotexp", ',', ''), '$', '') AS DECIMAL(18,2)) as TOTAL_EXPENDITURE,
-      TRY_CAST(REPLACE(REPLACE("gensaveloss", ',', ''), '$', '') AS DECIMAL(18,2)) as SAVINGS_LOSSES,
-      TRY_CAST(REPLACE(REPLACE("earnsaveloss", ',', ''), '$', '') AS DECIMAL(18,2)) as EARNED_SHARED_SAVINGS_PAYMENT,
-      "per_capita_exp_total_py" as COST_PER_BENEFICIARY,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."abtotbnchmk", ',', ''), '$', '') AS DECIMAL(18,2)) as BENCHMARK_EXPENDITURE,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."abtotexp", ',', ''), '$', '') AS DECIMAL(18,2)) as TOTAL_EXPENDITURE,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."gensaveloss", ',', ''), '$', '') AS DECIMAL(18,2)) as SAVINGS_LOSSES,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."earnsaveloss", ',', ''), '$', '') AS DECIMAL(18,2)) as EARNED_SHARED_SAVINGS_PAYMENT,
+      deduplicated."per_capita_exp_total_py" as COST_PER_BENEFICIARY,
 
       -- Utilization metrics
-      TRY_CAST(REPLACE(REPLACE("adm", ',', ''), '$', '') AS DECIMAL(12,2)) as IP_ADMISSIONS,
-      TRY_CAST(REPLACE(REPLACE("p_edv_vis", ',', ''), '$', '') AS DECIMAL(12,2)) as ED_VISITS_PER_1K,
-      TRY_CAST(REPLACE(REPLACE("p_em_pcp_vis", ',', ''), '$', '') AS DECIMAL(12,2)) as PCP_VISITS_PER_1K,
-      TRY_CAST(REPLACE(REPLACE("p_em_sp_vis", ',', ''), '$', '') AS DECIMAL(12,2)) as SPECIALIST_VISITS_PER_1K,
-      "readm_rate_1000" as READMISSION_RATE_PER_1000,
-      "snf_los" as SNF_LENGTH_OF_STAY,
-      TRY_CAST(REPLACE(REPLACE("p_snf_adm", ',', ''), '$', '') AS DECIMAL(12,2)) as SNF_ADMISSIONS_PER_1K,
-      TRY_CAST(REPLACE(REPLACE("snf_payperstay", ',', ''), '$', '') AS DECIMAL(12,2)) as SNF_PAY_PER_STAY,
-      TRY_CAST(REPLACE(REPLACE("p_edv_vis_hosp", ',', ''), '$', '') AS DECIMAL(12,2)) as ED_VISITS_HOSP_PER_1K,
-      "snf_waiver_ind" as SNF_WAIVER,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."adm", ',', ''), '$', '') AS DECIMAL(12,2)) as IP_ADMISSIONS,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."p_edv_vis", ',', ''), '$', '') AS DECIMAL(12,2)) as ED_VISITS_PER_1K,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."p_em_pcp_vis", ',', ''), '$', '') AS DECIMAL(12,2)) as PCP_VISITS_PER_1K,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."p_em_sp_vis", ',', ''), '$', '') AS DECIMAL(12,2)) as SPECIALIST_VISITS_PER_1K,
+      deduplicated."readm_rate_1000" as READMISSION_RATE_PER_1000,
+      deduplicated."snf_los" as SNF_LENGTH_OF_STAY,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."p_snf_adm", ',', ''), '$', '') AS DECIMAL(12,2)) as SNF_ADMISSIONS_PER_1K,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."snf_payperstay", ',', ''), '$', '') AS DECIMAL(12,2)) as SNF_PAY_PER_STAY,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."p_edv_vis_hosp", ',', ''), '$', '') AS DECIMAL(12,2)) as ED_VISITS_HOSP_PER_1K,
+      CAST(NULL AS VARCHAR) as SNF_WAIVER,
 
       -- Provider counts
-      TRY_CAST(REPLACE(REPLACE("n_pcp", ',', ''), '$', '') AS INTEGER) as NUM_PCPS,
-      TRY_CAST(REPLACE(REPLACE("n_spec", ',', ''), '$', '') AS INTEGER) as NUM_SPECIALISTS,
-      TRY_CAST(REPLACE(REPLACE("n_fqhc", ',', ''), '$', '') AS INTEGER) as NUM_FQHCS,
-      TRY_CAST(REPLACE(REPLACE("n_rhc", ',', ''), '$', '') AS INTEGER) as NUM_RHCS,
-      TRY_CAST(REPLACE(REPLACE("n_hosp", ',', ''), '$', '') AS INTEGER) as NUM_HOSPITALS,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_pcp", ',', ''), '$', '') AS INTEGER) as NUM_PCPS,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_spec", ',', ''), '$', '') AS INTEGER) as NUM_SPECIALISTS,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_fqhc", ',', ''), '$', '') AS INTEGER) as NUM_FQHCS,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_rhc", ',', ''), '$', '') AS INTEGER) as NUM_RHCS,
+      TRY_CAST(REPLACE(REPLACE(deduplicated."n_hosp", ',', ''), '$', '') AS INTEGER) as NUM_HOSPITALS,
 
-      -- Contact information from ACO_ORGANIZATIONS
-      CASE
-        WHEN org."ACO_Public_Contact_Email" IS NOT NULL
-        THEN REGEXP_SUBSTR(org."ACO_Public_Contact_Email", '@(.+)$', 1, 1, 'e', 1)
-        ELSE NULL
-      END as ACO_OWNER,
-      org."ACO_Public_Contact_Name" as CONTACT_NAME,
-      org."ACO_Public_Contact_Email" as CONTACT_EMAIL,
-      org."ACO_Public_Contact_Phone" as CONTACT_PHONE,
-      org."ACO_PUBLIC_REPORTING_WEBSITE" as REPORTING_WEBSITE,
-      org."ACO_SERVICE_AREA" as SERVICE_AREA
+      -- Contact information (TODO: Update with correct column names from ACO_ORGANIZATIONS)
+      CAST(NULL AS VARCHAR) as ACO_OWNER,
+      CAST(NULL AS VARCHAR) as CONTACT_NAME,
+      CAST(NULL AS VARCHAR) as CONTACT_EMAIL,
+      CAST(NULL AS VARCHAR) as CONTACT_PHONE,
+      CAST(NULL AS VARCHAR) as REPORTING_WEBSITE,
+      CAST(NULL AS VARCHAR) as SERVICE_AREA
     FROM deduplicated
-    LEFT JOIN ${config.database}.${config.schema}.ACO_ORGANIZATIONS org
-      ON deduplicated."aco_id" = org."ACO_ID"
-    ORDER BY TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) DESC NULLS LAST
+    ORDER BY TRY_CAST(REPLACE(deduplicated."sav_rate", '%', '') AS FLOAT) DESC NULLS LAST
   `;
 
   const data = await querySnowflake<ACORanking>(sql, config);

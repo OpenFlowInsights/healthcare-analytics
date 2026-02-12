@@ -165,7 +165,8 @@ export async function fetchDrugSpendTrend(): Promise<DrugSpendTrend[]> {
 
 /**
  * Fetch top drug spending drivers
- * Returns top 100 drugs for client-side sorting/filtering
+ * Returns top 100 unique drugs aggregated across all quarters
+ * Fixed: Removes duplicate drugs by aggregating spending
  */
 export async function fetchDrugDrivers(): Promise<DrugDriver[]> {
   const startTime = Date.now();
@@ -177,18 +178,19 @@ export async function fetchDrugDrivers(): Promise<DrugDriver[]> {
       BRAND_NAME,
       GENERIC_NAME,
       PROGRAM,
-      YEAR,
-      QUARTER,
-      TOTAL_SPENDING,
-      TOTAL_CLAIMS,
-      TOTAL_BENEFICIARIES,
-      AVG_SPENDING_PER_CLAIM,
-      AVG_SPENDING_PER_BENEFICIARY,
-      QOQ_GROWTH_PCT,
-      PCT_OF_TOTAL_SPEND,
-      SPENDING_CHANGE_DOLLARS,
-      SPEND_RANK
+      MAX("YEAR") as YEAR,
+      MAX(QUARTER) as QUARTER,
+      SUM(TOTAL_SPENDING) as TOTAL_SPENDING,
+      SUM(TOTAL_CLAIMS) as TOTAL_CLAIMS,
+      SUM(TOTAL_BENEFICIARIES) as TOTAL_BENEFICIARIES,
+      AVG(AVG_SPENDING_PER_CLAIM) as AVG_SPENDING_PER_CLAIM,
+      AVG(AVG_SPENDING_PER_BENEFICIARY) as AVG_SPENDING_PER_BENEFICIARY,
+      AVG(QOQ_GROWTH_PCT) as QOQ_GROWTH_PCT,
+      MAX(PCT_OF_TOTAL_SPEND) as PCT_OF_TOTAL_SPEND,
+      SUM(SPENDING_CHANGE_DOLLARS) as SPENDING_CHANGE_DOLLARS,
+      MIN(SPEND_RANK) as SPEND_RANK
     FROM STAGING_analytics.DRUG_SPEND_TOP_DRIVERS
+    GROUP BY BRAND_NAME, GENERIC_NAME, PROGRAM
     ORDER BY TOTAL_SPENDING DESC
     LIMIT 100
   `;
@@ -196,7 +198,7 @@ export async function fetchDrugDrivers(): Promise<DrugDriver[]> {
   const data = await querySnowflake<DrugDriver>(sql, config);
   const elapsed = Date.now() - startTime;
 
-  console.log(`[BUILD] ✓ Drug drivers fetched: ${data.length} rows in ${elapsed}ms`);
+  console.log(`[BUILD] ✓ Drug drivers fetched: ${data.length} unique drugs in ${elapsed}ms`);
 
   return data;
 }
