@@ -61,7 +61,7 @@ export function PerformanceAnalysisClient({ year, years, data }: PerformanceAnal
       totalSpending: cat.totalSpending,
       pctOfTotal: (cat.totalSpending / totalSpending) * 100,
       numACOs: cat.acos.size,
-      avgSavingsRate: cat.savingsRates.reduce((a, b) => a + b, 0) / cat.savingsRates.length,
+      avgSavingsRate: cat.savingsRates.reduce((a: number, b: number) => a + b, 0) / cat.savingsRates.length,
       positiveSavings: cat.positiveSavings,
       negativeSavings: cat.negativeSavings,
       totalGenSavings: cat.totalGenSavings,
@@ -178,7 +178,7 @@ export function PerformanceAnalysisClient({ year, years, data }: PerformanceAnal
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-sm font-medium text-gray-500">Avg Savings Rate</div>
               <div className="mt-2 text-3xl font-bold text-green-600">
-                {(categoryMetrics.categories.reduce((sum, c) => sum + c.avgSavingsRate, 0) / categoryMetrics.categories.length).toFixed(2)}%
+                {(categoryMetrics.categories.reduce((sum: number, c) => sum + c.avgSavingsRate, 0) / categoryMetrics.categories.length).toFixed(2)}%
               </div>
               <div className="mt-2 text-xs text-gray-500">
                 across all ACOs
