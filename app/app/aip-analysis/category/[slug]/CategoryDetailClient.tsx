@@ -141,7 +141,8 @@ export function CategoryDetailClient({
                   width={200}
                 />
                 <Tooltip
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                  formatter={(value) => [`$${(value || 0).toLocaleString()}`, '']}
+
                   labelFormatter={(label: string) => {
                     const item = chartData.find(d => d.name === label);
                     return item?.fullName || label;

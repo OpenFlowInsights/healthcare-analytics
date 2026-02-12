@@ -173,7 +173,7 @@ export function ACOProfileClient({ profile, years }: ACOProfileClientProps) {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                  <Tooltip formatter={(value) => `$${(value || 0).toLocaleString()}`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

@@ -147,7 +147,7 @@ export function AIPOverviewClient({ data }: AIPOverviewClientProps) {
                     tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                    formatter={(value) => [`$${(value || 0).toLocaleString()}`, '']}
                   />
                   <Legend />
                   <Bar dataKey="Actual Spending" fill="#2563eb" />
@@ -170,7 +170,7 @@ export function AIPOverviewClient({ data }: AIPOverviewClientProps) {
                     tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                    formatter={(value) => [`$${(value || 0).toLocaleString()}`, '']}
                   />
                   <Legend />
                   <Bar dataKey={selectedYear === 2024 ? "Actual Spending" : "Projected Spending"} fill="#2563eb" />
@@ -197,7 +197,7 @@ export function AIPOverviewClient({ data }: AIPOverviewClientProps) {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                  <Tooltip formatter={(value) => `$${(value || 0).toLocaleString()}`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
