@@ -174,6 +174,45 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
     return sorted;
   }, [rankingsWithYoY, searchTerm, sortColumn, sortDirection, hasFQHCs, minFQHCPct, maxFQHCPct]);
 
+  // Calculate distribution matrix (Track x Savings Range)
+  const distributionMatrix = useMemo(() => {
+    // Define savings/loss ranges
+    const ranges = [
+      { label: '> 10%', min: 10, max: Infinity },
+      { label: '5% to 10%', min: 5, max: 10 },
+      { label: '0% to 5%', min: 0, max: 5 },
+      { label: '-5% to 0%', min: -5, max: 0 },
+      { label: '< -5%', min: -Infinity, max: -5 },
+    ];
+
+    // Get unique tracks
+    const tracks = Array.from(new Set(rankings.map(aco => aco.ACO_TRACK || 'Unknown'))).sort();
+
+    // Build matrix
+    const matrix: Record<string, Record<string, number>> = {};
+
+    tracks.forEach(track => {
+      matrix[track] = {};
+      ranges.forEach(range => {
+        matrix[track][range.label] = 0;
+      });
+    });
+
+    // Count ACOs in each cell
+    rankings.forEach(aco => {
+      const track = aco.ACO_TRACK || 'Unknown';
+      const savingsRate = aco.SAVINGS_RATE_PCT;
+
+      ranges.forEach(range => {
+        if (savingsRate > range.min && savingsRate <= range.max) {
+          matrix[track][range.label]++;
+        }
+      });
+    });
+
+    return { matrix, ranges, tracks };
+  }, [rankings]);
+
   // Pagination
   const displayedRankings = showAll ? filteredAndSortedRankings : filteredAndSortedRankings.slice(0, 20);
 
@@ -278,6 +317,135 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
             label={`PY${prevYear}`}
             formatValue={(val) => `${val > 0 ? '+' : ''}$${(val / 1000000).toFixed(1)}M`}
           />
+        </div>
+      </div>
+
+      {/* Distribution Matrix: Track x Savings Range */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-bold mb-4">ACO Distribution by Track and Savings Performance</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Number of ACOs in each track and savings/loss range for PY{selectedYear}
+        </p>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="px-4 py-3 bg-gray-50 border border-gray-200 text-left text-sm font-semibold text-gray-700">
+                  Track
+                </th>
+                {distributionMatrix.ranges.map(range => (
+                  <th
+                    key={range.label}
+                    className="px-4 py-3 bg-gray-50 border border-gray-200 text-center text-sm font-semibold text-gray-700"
+                  >
+                    {range.label}
+                  </th>
+                ))}
+                <th className="px-4 py-3 bg-blue-50 border border-gray-200 text-center text-sm font-semibold text-blue-700">
+                  Total
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {distributionMatrix.tracks.map(track => {
+                const rowTotal = distributionMatrix.ranges.reduce(
+                  (sum, range) => sum + distributionMatrix.matrix[track][range.label],
+                  0
+                );
+
+                return (
+                  <tr key={track} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 border border-gray-200 font-medium text-gray-900">
+                      {track}
+                    </td>
+                    {distributionMatrix.ranges.map(range => {
+                      const count = distributionMatrix.matrix[track][range.label];
+                      const pct = rowTotal > 0 ? (count / rowTotal * 100).toFixed(0) : '0';
+
+                      // Color coding based on savings range
+                      let bgColor = 'bg-white';
+                      let textColor = 'text-gray-900';
+                      if (range.min >= 5) {
+                        bgColor = count > 0 ? 'bg-green-50' : 'bg-white';
+                        textColor = count > 0 ? 'text-green-700' : 'text-gray-400';
+                      } else if (range.min >= 0) {
+                        bgColor = count > 0 ? 'bg-blue-50' : 'bg-white';
+                        textColor = count > 0 ? 'text-blue-700' : 'text-gray-400';
+                      } else if (range.max <= -5) {
+                        bgColor = count > 0 ? 'bg-red-50' : 'bg-white';
+                        textColor = count > 0 ? 'text-red-700' : 'text-gray-400';
+                      } else {
+                        bgColor = count > 0 ? 'bg-yellow-50' : 'bg-white';
+                        textColor = count > 0 ? 'text-yellow-700' : 'text-gray-400';
+                      }
+
+                      return (
+                        <td
+                          key={range.label}
+                          className={`px-4 py-3 border border-gray-200 text-center ${bgColor}`}
+                        >
+                          <div className={`text-lg font-bold ${textColor}`}>
+                            {count}
+                          </div>
+                          {count > 0 && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              ({pct}%)
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="px-4 py-3 border border-gray-200 text-center bg-blue-50 font-bold text-blue-900">
+                      {rowTotal}
+                    </td>
+                  </tr>
+                );
+              })}
+              {/* Totals Row */}
+              <tr className="bg-gray-100">
+                <td className="px-4 py-3 border border-gray-200 font-bold text-gray-900">
+                  Total
+                </td>
+                {distributionMatrix.ranges.map(range => {
+                  const colTotal = distributionMatrix.tracks.reduce(
+                    (sum, track) => sum + distributionMatrix.matrix[track][range.label],
+                    0
+                  );
+                  return (
+                    <td
+                      key={range.label}
+                      className="px-4 py-3 border border-gray-200 text-center font-bold text-gray-900"
+                    >
+                      {colTotal}
+                    </td>
+                  );
+                })}
+                <td className="px-4 py-3 border border-gray-200 text-center bg-blue-100 font-bold text-blue-900">
+                  {rankings.length}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Legend */}
+        <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-600">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-green-50 border border-gray-300"></div>
+            <span>High Savings (&ge; 5%)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-blue-50 border border-gray-300"></div>
+            <span>Moderate Savings (0-5%)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-yellow-50 border border-gray-300"></div>
+            <span>Small Loss (0 to -5%)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-red-50 border border-gray-300"></div>
+            <span>Large Loss (&lt; -5%)</span>
+          </div>
         </div>
       </div>
 
