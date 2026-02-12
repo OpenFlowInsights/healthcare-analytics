@@ -29,6 +29,15 @@ export const dashboards: Dashboard[] = [
     external: true,
     status: 'active',
   },
+  {
+    id: 'aip-analysis',
+    title: 'AIP Spending Analysis',
+    description: 'Advance Investment Payment analysis by category, subcategory, and ACO with year-over-year projections',
+    category: 'aco',
+    href: '/aip-analysis',
+    status: 'active',
+    badge: 'NEW',
+  },
 
   // Part D Category
   {
