@@ -1,21 +1,11 @@
-'use client';
-
-import { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { FeaturedPost } from '@/components/blog/FeaturedPost';
-import { PostCard } from '@/components/blog/PostCard';
-import { CategoryFilter } from '@/components/blog/CategoryFilter';
-import { getAllPosts, getFeaturedPost, getPostsByCategory, categories } from '@/lib/data/blog-posts';
+import { BlogContent } from '@/components/blog/BlogContent';
+import { getAllPosts, getFeaturedPost, categories } from '@/lib/data/blog-posts';
 
 export default function BlogPage() {
-  const [activeCategory, setActiveCategory] = useState('All');
   const featuredPost = getFeaturedPost();
   const allPosts = getAllPosts();
-  const filteredPosts = getPostsByCategory(activeCategory);
-
-  // Exclude featured post from the grid
-  const gridPosts = filteredPosts.filter(post => !post.featured);
 
   return (
     <>
@@ -36,36 +26,11 @@ export default function BlogPage() {
         </section>
 
         {/* Blog Content */}
-        <section className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Featured Post */}
-            {featuredPost && activeCategory === 'All' && (
-              <FeaturedPost post={featuredPost} />
-            )}
-
-            {/* Category Filter */}
-            <CategoryFilter
-              categories={categories}
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-            />
-
-            {/* Posts Grid */}
-            {gridPosts.length > 0 ? (
-              <div className="grid md:grid-cols-2 gap-8">
-                {gridPosts.map((post) => (
-                  <PostCard key={post.slug} post={post} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-600 text-lg">
-                  No posts found in this category.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+        <BlogContent
+          featuredPost={featuredPost}
+          allPosts={allPosts}
+          categories={categories}
+        />
 
         {/* Newsletter CTA */}
         <section className="bg-white py-16 border-t">

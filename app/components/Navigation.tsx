@@ -20,9 +20,11 @@ export default function Navigation({ variant }: NavigationProps) {
   const effectiveVariant = variant || (isDashboardPage ? 'dark' : 'light');
 
   const dashboardLinks = [
-    { href: '/dashboard', label: 'ACO Performance', external: false },
-    { href: '/drug-spending', label: 'Drug Spending', external: false },
-    { href: 'https://partd-dashboard.vercel.app/dashboard', label: 'Part D Analytics', external: true },
+    { href: '/dashboards', label: 'View All Dashboards', external: false, isHeader: true },
+    { href: 'https://ofi-healthcare.vercel.app/dashboard', label: 'ACO Performance', external: true },
+    { href: 'https://ofi-healthcare.vercel.app/drug-spending', label: 'Drug Spending', external: true },
+    { href: 'https://partd-dashboard.vercel.app/dashboard', label: 'Part D Overview', external: true },
+    { href: 'https://partd-dashboard.vercel.app/dashboard/pa-opportunity', label: 'PA Gap Analysis', external: true },
     { href: 'https://snowquery.vercel.app', label: 'SnowQuery', external: true, badge: 'BETA' },
   ];
 
@@ -80,10 +82,22 @@ export default function Navigation({ variant }: NavigationProps) {
 
               {dashboardsOpen && (
                 <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
-                  {dashboardLinks.map((link) => (
-                    link.external ? (
+                  {dashboardLinks.map((link, idx) => {
+                    if (link.isHeader) {
+                      return (
+                        <Link
+                          key={idx}
+                          href={link.href}
+                          className="block px-4 py-2 text-sm font-semibold text-navy-900 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                        >
+                          {link.label}
+                        </Link>
+                      );
+                    }
+
+                    return link.external ? (
                       <a
-                        key={link.href}
+                        key={idx}
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -98,14 +112,14 @@ export default function Navigation({ variant }: NavigationProps) {
                       </a>
                     ) : (
                       <Link
-                        key={link.href}
+                        key={idx}
                         href={link.href}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         {link.label}
                       </Link>
-                    )
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -175,10 +189,23 @@ export default function Navigation({ variant }: NavigationProps) {
             {/* Mobile Dashboards Section */}
             <div className="px-3 py-2">
               <div className="text-sm font-semibold text-gray-900 mb-2">Dashboards</div>
-              {dashboardLinks.map((link) => (
-                link.external ? (
+              {dashboardLinks.map((link, idx) => {
+                if (link.isHeader) {
+                  return (
+                    <Link
+                      key={idx}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-3 py-2 text-sm font-semibold text-navy-900 hover:text-blue-600"
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                }
+
+                return link.external ? (
                   <a
-                    key={link.href}
+                    key={idx}
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -193,15 +220,15 @@ export default function Navigation({ variant }: NavigationProps) {
                   </a>
                 ) : (
                   <Link
-                    key={link.href}
+                    key={idx}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
                   >
                     {link.label}
                   </Link>
-                )
-              ))}
+                );
+              })}
             </div>
 
             <Link
