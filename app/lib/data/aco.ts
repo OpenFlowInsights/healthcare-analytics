@@ -29,6 +29,14 @@ export interface ACORanking {
   ACO_TRACK: string;
   PERFORMANCE_YEAR: number;
 
+  // Contact information
+  ACO_OWNER?: string; // Parsed email domain
+  CONTACT_NAME?: string;
+  CONTACT_EMAIL?: string;
+  CONTACT_PHONE?: string;
+  REPORTING_WEBSITE?: string;
+  SERVICE_AREA?: string;
+
   // Beneficiary counts
   TOTAL_BENEFICIARIES: number;
   AGED_NONDUAL_BENES?: number;
@@ -52,11 +60,13 @@ export interface ACORanking {
   // Utilization metrics
   IP_ADMISSIONS?: number;
   ED_VISITS_PER_1K?: number;
+  ED_VISITS_HOSP_PER_1K?: number;
   PCP_VISITS_PER_1K?: number;
   SPECIALIST_VISITS_PER_1K?: number;
   READMISSION_RATE_PER_1000?: number;
   SNF_LENGTH_OF_STAY?: number;
   SNF_ADMISSIONS_PER_1K?: number;
+  SNF_PAY_PER_STAY?: number;
 
   // Provider counts
   NUM_PCPS?: number;
@@ -64,6 +74,9 @@ export interface ACORanking {
   NUM_FQHCS?: number;
   NUM_RHCS?: number;
   NUM_HOSPITALS?: number;
+
+  // SNF Waiver
+  SNF_WAIVER?: string;
 }
 
 export interface YearlyData {
@@ -78,7 +91,7 @@ export interface MultiYearDashboardData {
 }
 
 /**
- * Fetch available performance years
+ * Fetch available performance years (limited to 2021-2024)
  */
 export async function fetchAvailableYears(): Promise<number[]> {
   const startTime = Date.now();
@@ -89,6 +102,7 @@ export async function fetchAvailableYears(): Promise<number[]> {
     SELECT DISTINCT "performance_year" AS PERFORMANCE_YEAR
     FROM ${config.database}.${config.schema}.ACO_PUF
     WHERE "performance_year" IS NOT NULL
+      AND "performance_year" BETWEEN 2021 AND 2024
     ORDER BY "performance_year" DESC
   `;
 
@@ -172,6 +186,9 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
         "readm_rate_1000",
         "snf_los",
         "p_snf_adm",
+        "snf_payperstay",
+        "p_edv_vis_hosp",
+        "snf_waiver_ind",
         -- Provider counts
         "n_pcp",
         "n_spec",
@@ -211,6 +228,9 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
         MAX("readm_rate_1000") as "readm_rate_1000",
         MAX("snf_los") as "snf_los",
         MAX("p_snf_adm") as "p_snf_adm",
+        MAX("snf_payperstay") as "snf_payperstay",
+        MAX("p_edv_vis_hosp") as "p_edv_vis_hosp",
+        MAX("snf_waiver_ind") as "snf_waiver_ind",
         -- Provider counts
         MAX("n_pcp") as "n_pcp",
         MAX("n_spec") as "n_spec",
@@ -261,14 +281,31 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
       "readm_rate_1000" as READMISSION_RATE_PER_1000,
       "snf_los" as SNF_LENGTH_OF_STAY,
       TRY_CAST(REPLACE(REPLACE("p_snf_adm", ',', ''), '$', '') AS DECIMAL(12,2)) as SNF_ADMISSIONS_PER_1K,
+      TRY_CAST(REPLACE(REPLACE("snf_payperstay", ',', ''), '$', '') AS DECIMAL(12,2)) as SNF_PAY_PER_STAY,
+      TRY_CAST(REPLACE(REPLACE("p_edv_vis_hosp", ',', ''), '$', '') AS DECIMAL(12,2)) as ED_VISITS_HOSP_PER_1K,
+      "snf_waiver_ind" as SNF_WAIVER,
 
       -- Provider counts
       TRY_CAST(REPLACE(REPLACE("n_pcp", ',', ''), '$', '') AS INTEGER) as NUM_PCPS,
       TRY_CAST(REPLACE(REPLACE("n_spec", ',', ''), '$', '') AS INTEGER) as NUM_SPECIALISTS,
       TRY_CAST(REPLACE(REPLACE("n_fqhc", ',', ''), '$', '') AS INTEGER) as NUM_FQHCS,
       TRY_CAST(REPLACE(REPLACE("n_rhc", ',', ''), '$', '') AS INTEGER) as NUM_RHCS,
-      TRY_CAST(REPLACE(REPLACE("n_hosp", ',', ''), '$', '') AS INTEGER) as NUM_HOSPITALS
+      TRY_CAST(REPLACE(REPLACE("n_hosp", ',', ''), '$', '') AS INTEGER) as NUM_HOSPITALS,
+
+      -- Contact information from ACO_ORGANIZATIONS
+      CASE
+        WHEN org."ACO_Public_Contact_Email" IS NOT NULL
+        THEN REGEXP_SUBSTR(org."ACO_Public_Contact_Email", '@(.+)$', 1, 1, 'e', 1)
+        ELSE NULL
+      END as ACO_OWNER,
+      org."ACO_Public_Contact_Name" as CONTACT_NAME,
+      org."ACO_Public_Contact_Email" as CONTACT_EMAIL,
+      org."ACO_Public_Contact_Phone" as CONTACT_PHONE,
+      org."ACO_PUBLIC_REPORTING_WEBSITE" as REPORTING_WEBSITE,
+      org."ACO_SERVICE_AREA" as SERVICE_AREA
     FROM deduplicated
+    LEFT JOIN ${config.database}.${config.schema}.ACO_ORGANIZATIONS org
+      ON deduplicated."aco_id" = org."ACO_ID"
     ORDER BY TRY_CAST(REPLACE("sav_rate", '%', '') AS FLOAT) DESC NULLS LAST
   `;
 

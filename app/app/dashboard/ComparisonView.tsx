@@ -13,6 +13,7 @@ interface ComparisonViewProps {
 
 interface Filters {
   tracks: string[];
+  acoOwners: string[];
   minBeneficiaries?: number;
   maxBeneficiaries?: number;
   hasFQHCs?: boolean;
@@ -42,6 +43,7 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     tracks: [],
+    acoOwners: [],
     contractStartYears: [],
     currentPerformanceYears: [],
   });
@@ -71,6 +73,10 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
   // Get unique values for filters
   const availableTracks = useMemo(() => {
     return Array.from(new Set(allACOs.map(aco => aco.ACO_TRACK).filter(Boolean))).sort();
+  }, [allACOs]);
+
+  const availableAcoOwners = useMemo(() => {
+    return Array.from(new Set(allACOs.map(aco => aco.ACO_OWNER).filter((owner): owner is string => Boolean(owner)))).sort();
   }, [allACOs]);
 
   const availableContractStartYears = useMemo(() => {
@@ -129,6 +135,11 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
     // Track filter
     if (filters.tracks.length > 0) {
       filtered = filtered.filter(aco => filters.tracks.includes(aco.ACO_TRACK));
+    }
+
+    // ACO Owner filter
+    if (filters.acoOwners.length > 0) {
+      filtered = filtered.filter(aco => aco.ACO_OWNER && filters.acoOwners.includes(aco.ACO_OWNER));
     }
 
     // Beneficiary count filter
@@ -254,13 +265,20 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
   );
 
   // Toggle filter
-  const toggleFilter = (type: 'track', value: string) => {
+  const toggleFilter = (type: 'track' | 'acoOwner', value: string) => {
     if (type === 'track') {
       setFilters(prev => ({
         ...prev,
         tracks: prev.tracks.includes(value)
           ? prev.tracks.filter(t => t !== value)
           : [...prev.tracks, value],
+      }));
+    } else if (type === 'acoOwner') {
+      setFilters(prev => ({
+        ...prev,
+        acoOwners: prev.acoOwners.includes(value)
+          ? prev.acoOwners.filter(o => o !== value)
+          : [...prev.acoOwners, value],
       }));
     }
   };
@@ -269,6 +287,7 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
   const clearFilters = () => {
     setFilters({
       tracks: [],
+      acoOwners: [],
       hasFQHCs: undefined,
       minFQHCPct: undefined,
       maxFQHCPct: undefined,
@@ -401,7 +420,34 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
               <div><span className="font-medium">Name:</span> {focusACO.ACO_NAME}</div>
               <div><span className="font-medium">ID:</span> {focusACO.ACO_ID}</div>
               <div><span className="font-medium">Track:</span> {focusACO.ACO_TRACK}</div>
+              {focusACO.ACO_OWNER && (
+                <div><span className="font-medium">Owner:</span> {focusACO.ACO_OWNER}</div>
+              )}
               <div><span className="font-medium">Beneficiaries:</span> {focusACO.TOTAL_BENEFICIARIES?.toLocaleString()}</div>
+
+              {/* Contact Information for Outreach */}
+              {(focusACO.CONTACT_NAME || focusACO.CONTACT_EMAIL || focusACO.CONTACT_PHONE || focusACO.REPORTING_WEBSITE || focusACO.SERVICE_AREA) && (
+                <>
+                  <div className="border-t border-blue-300 my-2 pt-2">
+                    <span className="font-semibold text-blue-900">Contact & Outreach:</span>
+                  </div>
+                  {focusACO.CONTACT_NAME && (
+                    <div><span className="font-medium">Contact:</span> {focusACO.CONTACT_NAME}</div>
+                  )}
+                  {focusACO.CONTACT_EMAIL && (
+                    <div><span className="font-medium">Email:</span> <a href={`mailto:${focusACO.CONTACT_EMAIL}`} className="text-blue-700 hover:underline">{focusACO.CONTACT_EMAIL}</a></div>
+                  )}
+                  {focusACO.CONTACT_PHONE && (
+                    <div><span className="font-medium">Phone:</span> {focusACO.CONTACT_PHONE}</div>
+                  )}
+                  {focusACO.REPORTING_WEBSITE && (
+                    <div><span className="font-medium">Website:</span> <a href={focusACO.REPORTING_WEBSITE} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">Visit Site</a></div>
+                  )}
+                  {focusACO.SERVICE_AREA && (
+                    <div><span className="font-medium">Service Area:</span> {focusACO.SERVICE_AREA}</div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -558,7 +604,7 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
               <span className="font-medium">
                 Comparing against <span className="text-blue-600">{comparisonGroup.length}</span> ACOs
               </span>
-              {(filters.tracks.length > 0 || filters.hasFQHCs !== undefined || filters.minFQHCPct !== undefined || filters.maxFQHCPct !== undefined || filters.contractStartYears.length > 0 || filters.currentPerformanceYears.length > 0) && (
+              {(filters.tracks.length > 0 || filters.acoOwners.length > 0 || filters.hasFQHCs !== undefined || filters.minFQHCPct !== undefined || filters.maxFQHCPct !== undefined || filters.contractStartYears.length > 0 || filters.currentPerformanceYears.length > 0) && (
                 <button
                   onClick={clearFilters}
                   className="text-blue-600 hover:text-blue-700 underline"
@@ -585,6 +631,26 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
                         }`}
                       >
                         {track}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ACO Owner Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ACO Owner (Email Domain)</label>
+                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                    {availableAcoOwners.map(owner => (
+                      <button
+                        key={owner}
+                        onClick={() => toggleFilter('acoOwner', owner)}
+                        className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                          filters.acoOwners.includes(owner)
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                        }`}
+                      >
+                        {owner}
                       </button>
                     ))}
                   </div>

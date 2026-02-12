@@ -7,12 +7,13 @@ import type { MultiYearDashboardData } from '@/lib/data/aco';
 import { PerformanceView } from './PerformanceView';
 import { ComparisonView } from './ComparisonView';
 import { ParticipantsView } from './ParticipantsView';
+import { SNFWaiverView } from './SNFWaiverView';
 
 interface ACODashboardClientProps {
   data: MultiYearDashboardData;
 }
 
-type ViewType = 'performance' | 'comparison' | 'participants';
+type ViewType = 'performance' | 'comparison' | 'participants' | 'snf-waiver';
 
 export function ACODashboardClient({ data }: ACODashboardClientProps) {
   const { years, buildTimestamp } = data;
@@ -43,6 +44,7 @@ export function ACODashboardClient({ data }: ACODashboardClientProps) {
     { id: 'performance' as ViewType, label: 'ACO Performance', description: 'Rankings & KPIs' },
     { id: 'comparison' as ViewType, label: 'ACO Comparison', description: 'Peer Benchmarking' },
     { id: 'participants' as ViewType, label: 'ACO Participants', description: 'Provider Roster' },
+    { id: 'snf-waiver' as ViewType, label: 'SNF Waiver Analysis', description: 'Waiver Impact' },
   ];
 
   return (
@@ -113,6 +115,14 @@ export function ACODashboardClient({ data }: ACODashboardClientProps) {
 
             {activeView === 'participants' && (
               <ParticipantsView
+                data={data}
+                selectedYear={selectedYear}
+                onYearChange={setSelectedYear}
+              />
+            )}
+
+            {activeView === 'snf-waiver' && (
+              <SNFWaiverView
                 data={data}
                 selectedYear={selectedYear}
                 onYearChange={setSelectedYear}
