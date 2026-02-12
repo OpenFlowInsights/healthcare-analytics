@@ -60,12 +60,12 @@ const getPrivateKey = (): string => {
 };
 
 export const getSnowflakeConfig = (): SnowflakeConfig => ({
-  account: process.env.SNOWFLAKE_ACCOUNT || '',
-  username: process.env.SNOWFLAKE_USERNAME || '',
+  account: process.env.SNOWFLAKE_ACCOUNT || 'jic51019.us-east-1',
+  username: process.env.SNOWFLAKE_USERNAME || 'APP_SERVICE',
   authenticator: 'SNOWFLAKE_JWT',
   privateKey: getPrivateKey(),
   database: process.env.SNOWFLAKE_DATABASE || 'DEV_DB',
-  schema: process.env.SNOWFLAKE_SCHEMA || 'STAGING_ANALYTICS',
+  schema: process.env.SNOWFLAKE_SCHEMA || 'MSSP_ACO',
   warehouse: process.env.SNOWFLAKE_WAREHOUSE || 'DEV_WH',
   role: process.env.SNOWFLAKE_ROLE || 'ACCOUNTADMIN',
 });

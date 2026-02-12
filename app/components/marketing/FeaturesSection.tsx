@@ -6,21 +6,21 @@ export function FeaturesSection() {
       icon: BarChart3,
       title: 'Custom SaaS Dashboards',
       description:
-        'Beautiful, interactive dashboards built specifically for your organization. Real-time data from CMS BCDA, Snowflake data warehouses, and your internal systems.',
+        'Beautiful, interactive dashboards built specifically for your organization. See live examples with our ACO Performance and Part D Intelligence dashboards tracking real CMS data.',
       color: 'text-blue-600',
     },
     {
       icon: TrendingUp,
       title: 'Risk Adjustment Analytics',
       description:
-        'RAF score optimization, HCC gap analysis, and coding opportunity identification. Maximize your risk-adjusted revenue with data-driven insights.',
+        'RAF score optimization, HCC gap analysis, and coding opportunity identification. Our PA Gap Analysis dashboard identifies millions in spend exposure from missing prior authorizations.',
       color: 'text-emerald-600',
     },
     {
       icon: Shield,
       title: 'Quality & Compliance Reporting',
       description:
-        'Track all 34 MIPS quality measures, HEDIS metrics, and Star Ratings performance. Automated monitoring ensures you never miss a deadline.',
+        'Track all 34 MIPS quality measures, HEDIS metrics, and Star Ratings performance. Our ACO dashboard includes live quality measure tracking and provider-level benchmarking.',
       color: 'text-violet-600',
     },
   ];

@@ -1,43 +1,52 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
-import { ArrowRight, BarChart3, Pill, Sparkles } from 'lucide-react';
+import { ArrowRight, BarChart3, Pill, AlertTriangle } from 'lucide-react';
 
 export function DashboardPreview() {
   const dashboards = [
     {
       title: 'ACO Performance Dashboard',
-      description: 'Track shared savings, quality scores, and beneficiary attribution in real-time.',
-      href: '/dashboard',
+      description: 'Track shared savings, RAF scores, quality measures, and provider-level cost patterns',
+      href: 'https://ofi-healthcare.vercel.app/dashboard',
       badge: 'Healthcare ACO',
       icon: BarChart3,
     },
     {
-      title: 'Drug Spending Analysis',
-      description: 'Analyze medication costs, utilization patterns, and formulary opportunities.',
-      href: '/drug-spending',
-      badge: 'Healthcare ACO',
-      icon: Pill,
+      title: 'PA Gap Analysis',
+      description: 'Flag claims with no PA where national plans require it, quantify spend exposure',
+      href: 'https://partd-dashboard.vercel.app/dashboard/pa-opportunity',
+      badge: 'Part D Intelligence',
+      icon: AlertTriangle,
     },
     {
-      title: 'Part D Prior Authorization Intelligence',
-      description: 'Comprehensive PA burden analysis and opportunity identification for Medicare Part D.',
-      href: 'https://partd-dashboard.vercel.app',
-      badge: 'Part D Analytics',
-      icon: Sparkles,
-      external: true,
+      title: 'Drug Spending Analysis',
+      description: 'Medicare Part D spending trends, brand vs generic analysis, cost-per-beneficiary tracking',
+      href: 'https://ofi-healthcare.vercel.app/drug-spending',
+      badge: 'Healthcare ACO',
+      icon: Pill,
     },
   ];
 
   return (
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Banner */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-200">
+            <span className="text-sm font-medium text-blue-900">
+              All dashboards below are live with real CMS data
+            </span>
+            <span className="text-blue-600 animate-pulse">→</span>
+          </div>
+        </div>
+
         <div className="text-center mb-12">
           <h2 className="font-heading font-bold text-3xl sm:text-4xl text-navy-900 mb-4">
-            Explore Our Dashboards
+            See What Your Data Looks Like
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            See real examples of our analytics in action
+            Explore live dashboards powered by real CMS data
           </p>
         </div>
 
@@ -46,8 +55,8 @@ export function DashboardPreview() {
             <Link
               key={index}
               href={dashboard.href}
-              target={dashboard.external ? '_blank' : undefined}
-              rel={dashboard.external ? 'noopener noreferrer' : undefined}
+              target="_blank"
+              rel="noopener noreferrer"
               className="block animate-fadeInUp"
               style={{ animationDelay: `${index * 200}ms` }}
             >
