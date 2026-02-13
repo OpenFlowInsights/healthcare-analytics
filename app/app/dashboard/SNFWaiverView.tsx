@@ -3,11 +3,13 @@
 import { useMemo } from 'react';
 import { BarChart, Users, TrendingUp, TrendingDown } from "lucide-react";
 import type { MultiYearDashboardData, ACORanking } from '@/lib/data/aco';
+import { getMetricDisplayValue } from '@/lib/utils/riskAdjustment';
 
 interface SNFWaiverViewProps {
   data: MultiYearDashboardData;
   selectedYear: number;
   onYearChange: (year: number) => void;
+  isRiskAdjusted?: boolean;
 }
 
 interface ComparisonStats {
@@ -21,7 +23,7 @@ interface ComparisonStats {
   totalSavingsLosses: number;
 }
 
-export function SNFWaiverView({ data, selectedYear, onYearChange }: SNFWaiverViewProps) {
+export function SNFWaiverView({ data, selectedYear, onYearChange, isRiskAdjusted = false }: SNFWaiverViewProps) {
   const { years, dataByYear } = data;
   const currentYearData = dataByYear[selectedYear];
   const allACOs = currentYearData?.rankings || [];
@@ -34,13 +36,21 @@ export function SNFWaiverView({ data, selectedYear, onYearChange }: SNFWaiverVie
     const calculateStats = (acos: ACORanking[]): ComparisonStats => {
       const validACOs = acos.filter(aco => aco.SAVINGS_RATE_PCT !== null);
 
+      // Helper to get metric value with optional risk adjustment
+      const getMetricValue = (aco: ACORanking, metricKey: keyof ACORanking): number => {
+        const value = isRiskAdjusted
+          ? getMetricDisplayValue(aco, metricKey, isRiskAdjusted)
+          : aco[metricKey];
+        return typeof value === 'number' ? value : 0;
+      };
+
       return {
         count: acos.length,
-        avgSNFAdmissions: acos.reduce((sum, aco) => sum + (aco.SNF_ADMISSIONS_PER_1K || 0), 0) / acos.length || 0,
-        avgSNFLOS: acos.reduce((sum, aco) => sum + (aco.SNF_LENGTH_OF_STAY || 0), 0) / acos.length || 0,
-        avgEDVisitsHosp: acos.reduce((sum, aco) => sum + (aco.ED_VISITS_HOSP_PER_1K || 0), 0) / acos.length || 0,
-        avgIPAdmissions: acos.reduce((sum, aco) => sum + (aco.IP_ADMISSIONS || 0), 0) / acos.length || 0,
-        avgSNFPayPerStay: acos.reduce((sum, aco) => sum + (aco.SNF_PAY_PER_STAY || 0), 0) / acos.length || 0,
+        avgSNFAdmissions: acos.reduce((sum, aco) => sum + getMetricValue(aco, 'SNF_ADMISSIONS_PER_1K'), 0) / acos.length || 0,
+        avgSNFLOS: acos.reduce((sum, aco) => sum + getMetricValue(aco, 'SNF_LENGTH_OF_STAY'), 0) / acos.length || 0,
+        avgEDVisitsHosp: acos.reduce((sum, aco) => sum + getMetricValue(aco, 'ED_VISITS_HOSP_PER_1K'), 0) / acos.length || 0,
+        avgIPAdmissions: acos.reduce((sum, aco) => sum + getMetricValue(aco, 'IP_ADMISSIONS'), 0) / acos.length || 0,
+        avgSNFPayPerStay: acos.reduce((sum, aco) => sum + getMetricValue(aco, 'SNF_PAY_PER_STAY'), 0) / acos.length || 0,
         avgSavingsRate: validACOs.reduce((sum, aco) => sum + aco.SAVINGS_RATE_PCT, 0) / validACOs.length || 0,
         totalSavingsLosses: acos.reduce((sum, aco) => sum + (aco.SAVINGS_LOSSES || 0), 0),
       };
@@ -50,7 +60,7 @@ export function SNFWaiverView({ data, selectedYear, onYearChange }: SNFWaiverVie
       waiver: calculateStats(waiverParticipants),
       nonWaiver: calculateStats(nonParticipants),
     };
-  }, [allACOs]);
+  }, [allACOs, isRiskAdjusted]);
 
   const MetricCard = ({
     title,

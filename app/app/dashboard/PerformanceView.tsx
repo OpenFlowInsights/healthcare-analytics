@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { BarChart, Users, DollarSign, TrendingUp, TrendingDown, Minus, X } from "lucide-react";
 import type { MultiYearDashboardData, DashboardSummary, ACORanking } from '@/lib/data/aco';
+import { getMetricDisplayValue } from '@/lib/utils/riskAdjustment';
 
 interface PerformanceViewProps {
   data: MultiYearDashboardData;
@@ -11,6 +12,7 @@ interface PerformanceViewProps {
   combinedRankings: ACORanking[];
   onYearChange: (year: number) => void;
   onACOClick?: (acoId: string) => void;
+  isRiskAdjusted?: boolean;
 }
 
 interface YoYIndicator {
@@ -59,7 +61,7 @@ const YoYIndicatorComponent = ({ yoy, label, formatValue }: {
   );
 };
 
-export function PerformanceView({ data, selectedYear, isAllYears, combinedRankings, onYearChange, onACOClick }: PerformanceViewProps) {
+export function PerformanceView({ data, selectedYear, isAllYears, combinedRankings, onYearChange, onACOClick, isRiskAdjusted = false }: PerformanceViewProps) {
   const { years, dataByYear } = data;
 
   // Client-side state for filtering/sorting

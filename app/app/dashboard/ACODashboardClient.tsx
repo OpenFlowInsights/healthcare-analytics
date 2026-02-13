@@ -9,6 +9,7 @@ import { PerformanceView } from './PerformanceView';
 import { ComparisonView } from './ComparisonView';
 import { ParticipantsView } from './ParticipantsView';
 import { SNFWaiverView } from './SNFWaiverView';
+import { calculateCompositeRiskScore } from '@/lib/utils/riskAdjustment';
 
 interface ACODashboardClientProps {
   data: MultiYearDashboardData;
@@ -38,6 +39,9 @@ export function ACODashboardClient({ data }: ACODashboardClientProps) {
     tracks: [],
     acoOwners: [],
   });
+
+  // Risk adjustment toggle
+  const [isRiskAdjusted, setIsRiskAdjusted] = useState(false);
 
   // Get all ACOs across all years for filter options
   const allACOsAllYears = useMemo(() => {
@@ -114,19 +118,43 @@ export function ACODashboardClient({ data }: ACODashboardClientProps) {
     return filtered;
   }, [years, dataByYear, buildTimestamp, globalFilters]);
 
+  // Enrich data with composite risk scores
+  const enrichedData = useMemo(() => {
+    const enriched: MultiYearDashboardData = {
+      years: filteredData.years,
+      buildTimestamp: filteredData.buildTimestamp,
+      dataByYear: {},
+    };
+
+    filteredData.years.forEach(year => {
+      const yearData = filteredData.dataByYear[year];
+      if (!yearData) return;
+
+      enriched.dataByYear[year] = {
+        summary: yearData.summary,
+        rankings: yearData.rankings.map(aco => ({
+          ...aco,
+          COMPOSITE_RISK_SCORE: calculateCompositeRiskScore(aco),
+        })),
+      };
+    });
+
+    return enriched;
+  }, [filteredData]);
+
   // Combined rankings for "All Years" view
   const combinedRankings = useMemo(() => {
     if (!isAllYears) return [];
 
     const allRankings: ACORanking[] = [];
     years.forEach(year => {
-      const yearData = filteredData.dataByYear[year];
+      const yearData = enrichedData.dataByYear[year];
       if (yearData) {
         allRankings.push(...yearData.rankings);
       }
     });
     return allRankings;
-  }, [isAllYears, years, filteredData]);
+  }, [isAllYears, years, enrichedData]);
 
   // Handle ACO click from Performance view
   const handleACOClick = (acoId: string) => {
@@ -236,6 +264,22 @@ export function ACODashboardClient({ data }: ACODashboardClientProps) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Risk Adjustment Toggle */}
+              <div className="flex items-end">
+                <button
+                  onClick={() => setIsRiskAdjusted(!isRiskAdjusted)}
+                  className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                    isRiskAdjusted
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-purple-400"
+                  }`}
+                  title="Normalize metrics by HCC risk scores for fair comparisons between ACOs"
+                >
+                  {isRiskAdjusted && <span className="text-xs">✓</span>}
+                  Risk Adjustment
+                </button>
               </div>
 
               {/* Filter Toggle Button */}
@@ -419,6 +463,16 @@ export function ACODashboardClient({ data }: ACODashboardClientProps) {
             )}
           </div>
 
+          {/* Risk Adjustment Indicator Badge */}
+          {isRiskAdjusted && (
+            <div className="mb-4 px-4 py-2 bg-purple-50 border border-purple-200 rounded-lg flex items-center gap-2">
+              <span className="text-purple-700 font-medium">Risk Adjusted Metrics</span>
+              <span className="text-purple-600 text-sm">
+                Normalized by HCC risk scores
+              </span>
+            </div>
+          )}
+
           {/* Tab Navigation */}
           <div className="mb-6 border-b border-gray-200">
             <nav className="flex space-x-8" aria-label="Tabs">
@@ -445,27 +499,29 @@ export function ACODashboardClient({ data }: ACODashboardClientProps) {
           <div className="mt-6">
             {activeView === 'performance' && (
               <PerformanceView
-                data={filteredData}
+                data={enrichedData}
                 selectedYear={selectedYear}
                 isAllYears={isAllYears}
                 combinedRankings={combinedRankings}
                 onYearChange={(year) => handleYearChange(year)}
                 onACOClick={handleACOClick}
+                isRiskAdjusted={isRiskAdjusted}
               />
             )}
 
             {activeView === 'comparison' && (
               <ComparisonView
-                data={filteredData}
+                data={enrichedData}
                 selectedYear={selectedYear}
                 onYearChange={(year) => handleYearChange(year)}
                 preselectedACOId={preselectedACOId}
+                isRiskAdjusted={isRiskAdjusted}
               />
             )}
 
             {activeView === 'participants' && (
               <ParticipantsView
-                data={filteredData}
+                data={enrichedData}
                 selectedYear={selectedYear}
                 onYearChange={(year) => handleYearChange(year)}
               />
@@ -473,9 +529,10 @@ export function ACODashboardClient({ data }: ACODashboardClientProps) {
 
             {activeView === 'snf-waiver' && (
               <SNFWaiverView
-                data={filteredData}
+                data={enrichedData}
                 selectedYear={selectedYear}
                 onYearChange={(year) => handleYearChange(year)}
+                isRiskAdjusted={isRiskAdjusted}
               />
             )}
           </div>

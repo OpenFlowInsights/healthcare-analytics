@@ -68,6 +68,12 @@ export interface ACORanking {
   SNF_ADMISSIONS_PER_1K?: number;
   SNF_PAY_PER_STAY?: number;
 
+  // Risk scores
+  RISK_SCORE_AGED_NON_DUAL?: number;
+  RISK_SCORE_AGED_DUAL?: number;
+  RISK_SCORE_DISABLED?: number;
+  COMPOSITE_RISK_SCORE?: number | null; // Calculated client-side
+
   // Provider counts
   NUM_PCPS?: number;
   NUM_SPECIALISTS?: number;
@@ -172,6 +178,10 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
         "n_ab_year_aged_dual_py",
         "n_ab_year_dis_py",
         "n_ab_year_esrd_py",
+        -- Risk scores
+        "cms_hcc_riskscore_agnd_py",
+        "cms_hcc_riskscore_agdu_py",
+        "cms_hcc_riskscore_dis_py",
         -- Financial metrics
         "abtotbnchmk",
         "abtotexp",
@@ -213,6 +223,10 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
         MAX("n_ab_year_aged_dual_py") as "n_ab_year_aged_dual_py",
         MAX("n_ab_year_dis_py") as "n_ab_year_dis_py",
         MAX("n_ab_year_esrd_py") as "n_ab_year_esrd_py",
+        -- Risk scores
+        MAX("cms_hcc_riskscore_agnd_py") as "cms_hcc_riskscore_agnd_py",
+        MAX("cms_hcc_riskscore_agdu_py") as "cms_hcc_riskscore_agdu_py",
+        MAX("cms_hcc_riskscore_dis_py") as "cms_hcc_riskscore_dis_py",
         -- Financial metrics
         MAX("abtotbnchmk") as "abtotbnchmk",
         MAX("abtotexp") as "abtotexp",
@@ -281,7 +295,12 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
       TRY_CAST(REPLACE(REPLACE(deduplicated."p_snf_adm", ',', ''), '$', '') AS DECIMAL(12,2)) as SNF_ADMISSIONS_PER_1K,
       TRY_CAST(REPLACE(REPLACE(deduplicated."snf_payperstay", ',', ''), '$', '') AS DECIMAL(12,2)) as SNF_PAY_PER_STAY,
       TRY_CAST(REPLACE(REPLACE(deduplicated."p_edv_vis_hosp", ',', ''), '$', '') AS DECIMAL(12,2)) as ED_VISITS_HOSP_PER_1K,
-      CAST(NULL AS VARCHAR) as SNF_WAIVER,
+      CASE WHEN org."SNF_3_DAY_RULE_WAIVER" = 1 THEN 'Y' ELSE 'N' END as SNF_WAIVER,
+
+      -- Risk scores
+      deduplicated."cms_hcc_riskscore_agnd_py" as RISK_SCORE_AGED_NON_DUAL,
+      deduplicated."cms_hcc_riskscore_agdu_py" as RISK_SCORE_AGED_DUAL,
+      deduplicated."cms_hcc_riskscore_dis_py" as RISK_SCORE_DISABLED,
 
       -- Provider counts
       TRY_CAST(REPLACE(REPLACE(deduplicated."n_pcp", ',', ''), '$', '') AS INTEGER) as NUM_PCPS,
@@ -298,6 +317,9 @@ export async function fetchACORankings(year: number): Promise<ACORanking[]> {
       CAST(NULL AS VARCHAR) as REPORTING_WEBSITE,
       CAST(NULL AS VARCHAR) as SERVICE_AREA
     FROM deduplicated
+    LEFT JOIN ${config.database}.${config.schema}.ACO_ORGANIZATIONS org
+      ON deduplicated."aco_id" = org."ACO_ID"
+      AND deduplicated."performance_year" = org."PERFORMANCE_YEAR"
     ORDER BY TRY_CAST(REPLACE(deduplicated."sav_rate", '%', '') AS FLOAT) DESC NULLS LAST
   `;
 

@@ -3,12 +3,14 @@
 import { useState, useMemo } from 'react';
 import { Search, X, Filter, TrendingUp, TrendingDown } from 'lucide-react';
 import type { MultiYearDashboardData, ACORanking } from '@/lib/data/aco';
+import { getMetricDisplayValue } from '@/lib/utils/riskAdjustment';
 
 interface ComparisonViewProps {
   data: MultiYearDashboardData;
   selectedYear: number;
   onYearChange: (year: number) => void;
   preselectedACOId?: string;
+  isRiskAdjusted?: boolean;
 }
 
 interface Filters {
@@ -32,7 +34,7 @@ interface ComparisonMetric {
   unit?: string;
 }
 
-export function ComparisonView({ data, selectedYear, onYearChange, preselectedACOId }: ComparisonViewProps) {
+export function ComparisonView({ data, selectedYear, onYearChange, preselectedACOId, isRiskAdjusted = false }: ComparisonViewProps) {
   const { years, dataByYear } = data;
   const currentYearData = dataByYear[selectedYear];
   const allACOs = currentYearData?.rankings || [];
@@ -196,14 +198,27 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
   }, [allACOs, selectedACOId, filters, acoYearData]);
 
   // Calculate statistics for a metric
-  const calculateStats = (getValue: (aco: ACORanking) => number | null): ComparisonMetric | null => {
+  const calculateStats = (getValue: (aco: ACORanking) => number | null, metricKey?: keyof ACORanking): ComparisonMetric | null => {
     if (!focusACO) return null;
 
-    const focusValue = getValue(focusACO);
+    // Get value with risk adjustment if applicable
+    let focusValue: number | null;
+    if (metricKey && isRiskAdjusted) {
+      focusValue = getMetricDisplayValue(focusACO, metricKey, isRiskAdjusted);
+    } else {
+      focusValue = getValue(focusACO);
+    }
+
     if (focusValue === null) return null;
 
+    // Get values from comparison group with risk adjustment if applicable
     const values = comparisonGroup
-      .map(getValue)
+      .map(aco => {
+        if (metricKey && isRiskAdjusted) {
+          return getMetricDisplayValue(aco, metricKey, isRiskAdjusted);
+        }
+        return getValue(aco);
+      })
       .filter((v): v is number => v !== null)
       .sort((a, b) => a - b);
 
@@ -243,28 +258,28 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
 
   // Enhanced metrics - Utilization
   const edVisitsStats = useMemo(() =>
-    calculateStats(aco => aco.ED_VISITS_PER_1K || null),
-    [focusACO, comparisonGroup]
+    calculateStats(aco => aco.ED_VISITS_PER_1K || null, 'ED_VISITS_PER_1K'),
+    [focusACO, comparisonGroup, isRiskAdjusted]
   );
 
   const pcpVisitsStats = useMemo(() =>
-    calculateStats(aco => aco.PCP_VISITS_PER_1K || null),
-    [focusACO, comparisonGroup]
+    calculateStats(aco => aco.PCP_VISITS_PER_1K || null, 'PCP_VISITS_PER_1K'),
+    [focusACO, comparisonGroup, isRiskAdjusted]
   );
 
   const specialistVisitsStats = useMemo(() =>
-    calculateStats(aco => aco.SPECIALIST_VISITS_PER_1K || null),
-    [focusACO, comparisonGroup]
+    calculateStats(aco => aco.SPECIALIST_VISITS_PER_1K || null, 'SPECIALIST_VISITS_PER_1K'),
+    [focusACO, comparisonGroup, isRiskAdjusted]
   );
 
   const readmissionStats = useMemo(() =>
-    calculateStats(aco => aco.READMISSION_RATE_PER_1000 || null),
-    [focusACO, comparisonGroup]
+    calculateStats(aco => aco.READMISSION_RATE_PER_1000 || null, 'READMISSION_RATE_PER_1000'),
+    [focusACO, comparisonGroup, isRiskAdjusted]
   );
 
   const snfAdmissionsStats = useMemo(() =>
-    calculateStats(aco => aco.SNF_ADMISSIONS_PER_1K || null),
-    [focusACO, comparisonGroup]
+    calculateStats(aco => aco.SNF_ADMISSIONS_PER_1K || null, 'SNF_ADMISSIONS_PER_1K'),
+    [focusACO, comparisonGroup, isRiskAdjusted]
   );
 
   // Toggle filter
