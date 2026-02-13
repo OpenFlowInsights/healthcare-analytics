@@ -29,6 +29,7 @@ import type {
   DrugSpendSummary,
   DrugSpendTrend,
   DrugDriver,
+  DrugDriverComparison,
   DrugCategory,
   YearComparisonData,
 } from '@/lib/data/drug-spending';
@@ -37,7 +38,7 @@ interface DrugSpendingDashboardClientProps {
   data: {
     summary: DrugSpendSummary;
     trend: DrugSpendTrend[];
-    drivers: DrugDriver[];
+    drivers: DrugDriverComparison[];
     categories: DrugCategory[];
     yearComparison: YearComparisonData[];
     buildTimestamp: string;
@@ -634,99 +635,74 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
 
           {/* Row 5: Detailed Table */}
           <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Detailed Drug Analysis</h2>
-              {drivers.length > 0 && drivers[0].YEAR && drivers[0].QUARTER && (
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                  {drivers[0].YEAR} {drivers[0].QUARTER} Data
-                </span>
-              )}
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Detailed Drug Analysis: 2024 vs 2025 Comparison</h2>
+              <p className="text-sm text-gray-600">
+                2024 Full Year (Q1-Q4) vs 2025 Annualized (Q1-Q2 × 2)
+              </p>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort("BRAND_NAME")}
-                    >
-                      Brand Name {sortColumn === "BRAND_NAME" && (sortDirection === "asc" ? "↑" : "↓")}
+                    <th rowSpan={2} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                      Brand Name
                     </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort("GENERIC_NAME")}
-                    >
-                      Generic Name {sortColumn === "GENERIC_NAME" && (sortDirection === "asc" ? "↑" : "↓")}
+                    <th rowSpan={2} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                      Generic Name
                     </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort("PROGRAM")}
-                    >
-                      Program {sortColumn === "PROGRAM" && (sortDirection === "asc" ? "↑" : "↓")}
+                    <th colSpan={4} className="px-3 py-2 text-center text-xs font-medium text-blue-700 uppercase tracking-wider border-r border-gray-300 bg-blue-50">
+                      2024 Full Year (Q1-Q4)
                     </th>
-                    <th
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort("TOTAL_SPENDING")}
-                    >
-                      Total Spend {sortColumn === "TOTAL_SPENDING" && (sortDirection === "asc" ? "↑" : "↓")}
+                    <th colSpan={4} className="px-3 py-2 text-center text-xs font-medium text-green-700 uppercase tracking-wider bg-green-50">
+                      2025 Annualized (Q1-Q2 × 2)
                     </th>
-                    <th
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort("TOTAL_CLAIMS")}
-                    >
-                      Total Claims {sortColumn === "TOTAL_CLAIMS" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort("AVG_SPENDING_PER_CLAIM")}
-                    >
-                      Avg Cost/Claim {sortColumn === "AVG_SPENDING_PER_CLAIM" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort("QOQ_GROWTH_PCT")}
-                    >
-                      QoQ Change {sortColumn === "QOQ_GROWTH_PCT" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
+                  </tr>
+                  <tr>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">Spend</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">Claims</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">Avg$/Claim</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 bg-blue-50">Benes</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Spend</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Claims</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Avg$/Claim</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Benes</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {displayedDrivers.map((driver, index) => (
                     <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-3 py-3 text-sm font-medium text-gray-900 border-r border-gray-200">
                         {driver.BRAND_NAME}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-3 py-3 text-sm text-gray-600 border-r border-gray-200">
                         {driver.GENERIC_NAME}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            driver.PROGRAM === "Part D"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {driver.PROGRAM}
-                        </span>
+                      {/* 2024 Data */}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-right font-medium text-blue-900 bg-blue-50">
+                        {driver.SPENDING_2024 ? formatCurrency(driver.SPENDING_2024) : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
-                        {formatCurrencyDetailed(driver.TOTAL_SPENDING)}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-right text-blue-900 bg-blue-50">
+                        {driver.CLAIMS_2024 ? driver.CLAIMS_2024.toLocaleString() : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {driver.TOTAL_CLAIMS?.toLocaleString()}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-right text-blue-900 bg-blue-50">
+                        {driver.AVG_COST_CLAIM_2024 ? `$${driver.AVG_COST_CLAIM_2024.toFixed(2)}` : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {formatCurrencyDetailed(driver.AVG_SPENDING_PER_CLAIM)}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-right text-blue-900 border-r border-gray-300 bg-blue-50">
+                        {driver.BENES_2024 ? driver.BENES_2024.toLocaleString() : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                        <span
-                          className={`font-medium ${
-                            driver.QOQ_GROWTH_PCT >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {formatPercent(driver.QOQ_GROWTH_PCT)}
-                        </span>
+                      {/* 2025 Annualized Data */}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-right font-medium text-green-900 bg-green-50">
+                        {driver.SPENDING_2025_ANNUALIZED ? formatCurrency(driver.SPENDING_2025_ANNUALIZED) : '-'}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-right text-green-900 bg-green-50">
+                        {driver.CLAIMS_2025_ANNUALIZED ? driver.CLAIMS_2025_ANNUALIZED.toLocaleString() : '-'}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-right text-green-900 bg-green-50">
+                        {driver.AVG_COST_CLAIM_2025 ? `$${driver.AVG_COST_CLAIM_2025.toFixed(2)}` : '-'}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-right text-green-900 bg-green-50">
+                        {driver.BENES_2025_ANNUALIZED ? driver.BENES_2025_ANNUALIZED.toLocaleString() : '-'}
                       </td>
                     </tr>
                   ))}

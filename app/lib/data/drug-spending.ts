@@ -229,41 +229,91 @@ export async function fetchDrugSpendTrend(): Promise<DrugSpendTrend[]> {
 }
 
 /**
- * Fetch top drug spending drivers
- * Returns top 100 unique drugs aggregated across all quarters
- * Fixed: Removes duplicate drugs by aggregating spending
+ * Fetch top drug spending drivers with 2024 vs 2025 comparison
+ * Returns top 100 unique drugs with side-by-side year comparison
  */
-export async function fetchDrugDrivers(): Promise<DrugDriver[]> {
+export interface DrugDriverComparison extends DrugDriver {
+  SPENDING_2024?: number;
+  CLAIMS_2024?: number;
+  BENES_2024?: number;
+  AVG_COST_CLAIM_2024?: number;
+  SPENDING_2025_ACTUAL?: number;
+  CLAIMS_2025_ACTUAL?: number;
+  BENES_2025_ACTUAL?: number;
+  AVG_COST_CLAIM_2025?: number;
+  SPENDING_2025_ANNUALIZED?: number;
+  CLAIMS_2025_ANNUALIZED?: number;
+  BENES_2025_ANNUALIZED?: number;
+}
+
+export async function fetchDrugDrivers(): Promise<DrugDriverComparison[]> {
   const startTime = Date.now();
-  console.log('[BUILD] Fetching drug drivers...');
+  console.log('[BUILD] Fetching drug drivers with year comparison...');
 
   const config = getSnowflakeConfig();
   const sql = `
+    WITH drug_2024 AS (
+      SELECT
+        "Brnd_Name" as BRAND_NAME,
+        "Gnrc_Name" as GENERIC_NAME,
+        SUM("Tot_Spndng") as SPENDING_2024,
+        SUM("Tot_Clms") as CLAIMS_2024,
+        SUM("Tot_Benes") as BENES_2024,
+        AVG("Avg_Spnd_Per_Clm") as AVG_COST_CLAIM_2024
+      FROM RAW.RAW_PARTD_SPENDING_QUARTERLY
+      WHERE "Year" = '2024 (Q1-Q4)'
+      GROUP BY "Brnd_Name", "Gnrc_Name"
+    ),
+    drug_2025 AS (
+      SELECT
+        "Brnd_Name" as BRAND_NAME,
+        "Gnrc_Name" as GENERIC_NAME,
+        SUM("Tot_Spndng") as SPENDING_2025_ACTUAL,
+        SUM("Tot_Clms") as CLAIMS_2025_ACTUAL,
+        SUM("Tot_Benes") as BENES_2025_ACTUAL,
+        AVG("Avg_Spnd_Per_Clm") as AVG_COST_CLAIM_2025
+      FROM RAW.RAW_PARTD_SPENDING_QUARTERLY
+      WHERE "Year" = '2025 (Q1-Q2)'
+      GROUP BY "Brnd_Name", "Gnrc_Name"
+    )
     SELECT
-      BRAND_NAME,
-      GENERIC_NAME,
-      PROGRAM,
-      MAX("YEAR") as YEAR,
-      MAX(QUARTER) as QUARTER,
-      SUM(TOTAL_SPENDING) as TOTAL_SPENDING,
-      SUM(TOTAL_CLAIMS) as TOTAL_CLAIMS,
-      SUM(TOTAL_BENEFICIARIES) as TOTAL_BENEFICIARIES,
-      AVG(AVG_SPENDING_PER_CLAIM) as AVG_SPENDING_PER_CLAIM,
-      AVG(AVG_SPENDING_PER_BENEFICIARY) as AVG_SPENDING_PER_BENEFICIARY,
-      AVG(QOQ_GROWTH_PCT) as QOQ_GROWTH_PCT,
-      MAX(PCT_OF_TOTAL_SPEND) as PCT_OF_TOTAL_SPEND,
-      SUM(SPENDING_CHANGE_DOLLARS) as SPENDING_CHANGE_DOLLARS,
-      MIN(SPEND_RANK) as SPEND_RANK
-    FROM STAGING_analytics.DRUG_SPEND_TOP_DRIVERS
-    GROUP BY BRAND_NAME, GENERIC_NAME, PROGRAM
-    ORDER BY TOTAL_SPENDING DESC
+      COALESCE(d24.BRAND_NAME, d25.BRAND_NAME) as BRAND_NAME,
+      COALESCE(d24.GENERIC_NAME, d25.GENERIC_NAME) as GENERIC_NAME,
+      'Part D' as PROGRAM,
+      2025 as YEAR,
+      'Q1-Q2' as QUARTER,
+      COALESCE(d24.SPENDING_2024, 0) + COALESCE(d25.SPENDING_2025_ACTUAL, 0) as TOTAL_SPENDING,
+      COALESCE(d24.CLAIMS_2024, 0) + COALESCE(d25.CLAIMS_2025_ACTUAL, 0) as TOTAL_CLAIMS,
+      COALESCE(d24.BENES_2024, 0) + COALESCE(d25.BENES_2025_ACTUAL, 0) as TOTAL_BENEFICIARIES,
+      COALESCE(d24.AVG_COST_CLAIM_2024, d25.AVG_COST_CLAIM_2025, 0) as AVG_SPENDING_PER_CLAIM,
+      0 as AVG_SPENDING_PER_BENEFICIARY,
+      0 as QOQ_GROWTH_PCT,
+      0 as PCT_OF_TOTAL_SPEND,
+      0 as SPENDING_CHANGE_DOLLARS,
+      0 as SPEND_RANK,
+      d24.SPENDING_2024,
+      d24.CLAIMS_2024,
+      d24.BENES_2024,
+      d24.AVG_COST_CLAIM_2024,
+      d25.SPENDING_2025_ACTUAL,
+      d25.CLAIMS_2025_ACTUAL,
+      d25.BENES_2025_ACTUAL,
+      d25.AVG_COST_CLAIM_2025,
+      d25.SPENDING_2025_ACTUAL * 2 as SPENDING_2025_ANNUALIZED,
+      d25.CLAIMS_2025_ACTUAL * 2 as CLAIMS_2025_ANNUALIZED,
+      d25.BENES_2025_ACTUAL * 2 as BENES_2025_ANNUALIZED
+    FROM drug_2024 d24
+    FULL OUTER JOIN drug_2025 d25
+      ON d24.BRAND_NAME = d25.BRAND_NAME
+      AND d24.GENERIC_NAME = d25.GENERIC_NAME
+    ORDER BY COALESCE(d24.SPENDING_2024, 0) + COALESCE(d25.SPENDING_2025_ACTUAL * 2, 0) DESC
     LIMIT 100
   `;
 
-  const data = await querySnowflake<DrugDriver>(sql, config);
+  const data = await querySnowflake<DrugDriverComparison>(sql, config);
   const elapsed = Date.now() - startTime;
 
-  console.log(`[BUILD] ✓ Drug drivers fetched: ${data.length} unique drugs in ${elapsed}ms`);
+  console.log(`[BUILD] ✓ Drug drivers fetched: ${data.length} unique drugs with year comparison in ${elapsed}ms`);
 
   return data;
 }
