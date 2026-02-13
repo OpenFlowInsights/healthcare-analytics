@@ -243,7 +243,6 @@ export interface DrugDriverComparison extends DrugDriver {
   AVG_COST_CLAIM_2025?: number;
   SPENDING_2025_ANNUALIZED?: number;
   CLAIMS_2025_ANNUALIZED?: number;
-  BENES_2025_ANNUALIZED?: number;
 }
 
 export async function fetchDrugDrivers(): Promise<DrugDriverComparison[]> {
@@ -300,8 +299,7 @@ export async function fetchDrugDrivers(): Promise<DrugDriverComparison[]> {
       d25.BENES_2025_ACTUAL,
       d25.AVG_COST_CLAIM_2025,
       d25.SPENDING_2025_ACTUAL * 2 as SPENDING_2025_ANNUALIZED,
-      d25.CLAIMS_2025_ACTUAL * 2 as CLAIMS_2025_ANNUALIZED,
-      d25.BENES_2025_ACTUAL * 2 as BENES_2025_ANNUALIZED
+      d25.CLAIMS_2025_ACTUAL * 2 as CLAIMS_2025_ANNUALIZED
     FROM drug_2024 d24
     FULL OUTER JOIN drug_2025 d25
       ON d24.BRAND_NAME = d25.BRAND_NAME

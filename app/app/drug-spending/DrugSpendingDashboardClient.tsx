@@ -319,112 +319,7 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
             />
           </div>
 
-          {/* Row 2: Year-over-Year Spending Comparison */}
-          {yearComparison && yearComparison.length > 0 && (
-          <div className="bg-white p-6 rounded-lg shadow mb-8">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Year-over-Year Spending Comparison</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                2024 Full Year (Q1-Q4) vs 2025 Through Q2 (Q1-Q2) with annualized projection
-              </p>
-            </div>
-            <ResponsiveContainer width="100%" height={450}>
-              <BarChart
-                data={(() => {
-                  // Transform yearComparison data for visualization
-                  const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2024'));
-                  const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2025'));
-                  const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2024'));
-                  const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2025'));
-
-                  return [
-                    {
-                      name: 'Part D',
-                      '2024 Actual\n(Full Year)': partD2024?.actual_spending || 0,
-                      '2025 Actual\n(Q1-Q2)': partD2025?.actual_spending || 0,
-                      '2025 Projected\n(Annualized)': partD2025?.annualized_spending || 0,
-                    },
-                    {
-                      name: 'Part B',
-                      '2024 Actual\n(Full Year)': partB2024?.actual_spending || 0,
-                      '2025 Actual\n(Q1-Q2)': partB2025?.actual_spending || 0,
-                      '2025 Projected\n(Annualized)': partB2025?.annualized_spending || 0,
-                    },
-                  ];
-                })()}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <Tooltip
-                  formatter={(value: any) => formatCurrencyDetailed(value)}
-                  contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }}
-                />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar dataKey="2024 Actual\n(Full Year)" fill="#3b82f6" />
-                <Bar dataKey="2025 Actual\n(Q1-Q2)" fill="#f59e0b" />
-                <Bar dataKey="2025 Projected\n(Annualized)" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
-
-            {/* Growth Rate Analysis */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(() => {
-                const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2024'));
-                const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2025'));
-                const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2024'));
-                const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2025'));
-
-                const partDGrowth = partD2024 && partD2025
-                  ? ((partD2025.annualized_spending! - partD2024.actual_spending) / partD2024.actual_spending * 100)
-                  : 0;
-                const partBGrowth = partB2024 && partB2025
-                  ? ((partB2025.annualized_spending! - partB2024.actual_spending) / partB2024.actual_spending * 100)
-                  : 0;
-
-                return (
-                  <>
-                    <div className="bg-purple-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600">Part D Projected Growth</p>
-                          <p className={`text-2xl font-bold mt-1 ${partDGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {partDGrowth >= 0 ? '+' : ''}{partDGrowth.toFixed(1)}%
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">2024 FY vs 2025 Annualized</p>
-                        </div>
-                        {partDGrowth >= 0 ? (
-                          <TrendingUp className="w-8 h-8 text-green-600" />
-                        ) : (
-                          <TrendingDown className="w-8 h-8 text-red-600" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600">Part B Projected Growth</p>
-                          <p className={`text-2xl font-bold mt-1 ${partBGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {partBGrowth >= 0 ? '+' : ''}{partBGrowth.toFixed(1)}%
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">2024 FY vs 2025 Annualized</p>
-                        </div>
-                        {partBGrowth >= 0 ? (
-                          <TrendingUp className="w-8 h-8 text-green-600" />
-                        ) : (
-                          <TrendingDown className="w-8 h-8 text-red-600" />
-                        )}
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-          )}
-
-          {/* Row 3: Top 20 Drugs Bar Chart */}
+          {/* Row 2: Top 20 Drugs Bar Chart */}
           <div className="bg-white p-6 rounded-lg shadow mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">Top 20 Drugs by Spending</h2>
@@ -638,7 +533,7 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
             <div className="mb-4">
               <h2 className="text-xl font-bold text-gray-900 mb-2">Detailed Drug Analysis: 2024 vs 2025 Comparison</h2>
               <p className="text-sm text-gray-600">
-                2024 Full Year (Q1-Q4) vs 2025 Annualized (Q1-Q2 × 2)
+                2024 Full Year (Q1-Q4) vs 2025 (Q1-Q2). Spending and claims are annualized (× 2). Beneficiaries show actual Q1-Q2 counts.
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -655,7 +550,7 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
                       2024 Full Year (Q1-Q4)
                     </th>
                     <th colSpan={4} className="px-3 py-2 text-center text-xs font-medium text-green-700 uppercase tracking-wider bg-green-50">
-                      2025 Annualized (Q1-Q2 × 2)
+                      2025 (Q1-Q2)
                     </th>
                   </tr>
                   <tr>
@@ -663,10 +558,10 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
                     <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">Claims</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">Avg$/Claim</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 bg-blue-50">Benes</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Spend</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Claims</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Spend (×2)</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Claims (×2)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Avg$/Claim</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Benes</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Benes (Actual)</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -702,7 +597,7 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
                         {driver.AVG_COST_CLAIM_2025 ? `$${driver.AVG_COST_CLAIM_2025.toFixed(2)}` : '-'}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-right text-green-900 bg-green-50">
-                        {driver.BENES_2025_ANNUALIZED ? driver.BENES_2025_ANNUALIZED.toLocaleString() : '-'}
+                        {driver.BENES_2025_ACTUAL ? driver.BENES_2025_ACTUAL.toLocaleString() : '-'}
                       </td>
                     </tr>
                   ))}
