@@ -319,6 +319,7 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
           </div>
 
           {/* Row 2: Year-over-Year Spending Comparison */}
+          {yearComparison && yearComparison.length > 0 && (
           <div className="bg-white p-6 rounded-lg shadow mb-8">
             <div>
               <h2 className="text-xl font-bold text-gray-900 mb-2">Year-over-Year Spending Comparison</h2>
@@ -420,6 +421,7 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
               })()}
             </div>
           </div>
+          )}
 
           {/* Row 3: Top 20 Drugs Bar Chart */}
           <div className="bg-white p-6 rounded-lg shadow mb-8">
@@ -499,6 +501,7 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
           </div>
 
           {/* Row 4: Spending Composition Analysis */}
+          {yearComparison && yearComparison.length > 0 && (
           <div className="bg-white p-6 rounded-lg shadow mb-8">
             <div>
               <h2 className="text-xl font-bold text-gray-900 mb-2">Spending Composition Change</h2>
@@ -627,6 +630,7 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
               })()}
             </div>
           </div>
+          )}
 
           {/* Row 5: Detailed Table */}
           <div className="bg-white p-6 rounded-lg shadow">

@@ -479,3 +479,161 @@ export async function fetchACODashboardData(): Promise<MultiYearDashboardData> {
     buildTimestamp: new Date().toISOString(),
   };
 }
+
+/**
+ * ACO Participant Interface
+ */
+export interface ACOParticipant {
+  ACO_ID: string;
+  ACO_NAME: string;
+  PERFORMANCE_YEAR: number;
+  PAR_LBN: string; // Participant Legal Business Name
+  ACO_NUM?: string;
+  AGREEMENT_PERIOD_NUM?: number;
+}
+
+/**
+ * County Beneficiary Interface
+ */
+export interface CountyBeneficiary {
+  ACO_ID: string;
+  YEAR: number;
+  STATE_NAME: string;
+  STATE_ID: string;
+  COUNTY_NAME: string;
+  COUNTY_ID: string;
+  TOT_AB: number; // Total attributed beneficiaries
+  TOT_AB_PSN_YRS: number; // Total person-years
+  AB_PSN_YRS_AGDU?: number; // Aged dual
+  AB_PSN_YRS_AGND?: number; // Aged non-dual
+  AB_PSN_YRS_DIS?: number; // Disabled
+  AB_PSN_YRS_ESRD?: number; // ESRD
+}
+
+/**
+ * Fetch ACO participants for a specific ACO and year
+ */
+export async function fetchACOParticipants(
+  acoId: string,
+  year: number
+): Promise<ACOParticipant[]> {
+  const startTime = Date.now();
+  console.log(`[BUILD] Fetching participants for ACO ${acoId}, year ${year}...`);
+
+  const config = getSnowflakeConfig();
+
+  const sql = `
+    SELECT DISTINCT
+      "ACO_ID" as ACO_ID,
+      "ACO_NAME" as ACO_NAME,
+      TRY_CAST("PERFORMANCE_YEAR" AS INT) as PERFORMANCE_YEAR,
+      "PAR_LBN" as PAR_LBN,
+      "ACO_NUM" as ACO_NUM,
+      TRY_CAST("AGREEMENT_PERIOD_NUM" AS INT) as AGREEMENT_PERIOD_NUM
+    FROM ${config.database}.${config.schema}.ACO_PARTICIPANTS
+    WHERE "ACO_ID" = '${acoId}'
+      AND TRY_CAST("PERFORMANCE_YEAR" AS INT) = ${year}
+    ORDER BY "PAR_LBN"
+  `;
+
+  const rows = await querySnowflake<ACOParticipant>(sql, config);
+
+  const elapsed = Date.now() - startTime;
+  console.log(`[BUILD] ✓ Participants fetched: ${rows.length} rows in ${elapsed}ms`);
+
+  return rows;
+}
+
+/**
+ * Fetch county-level beneficiary data for a specific year
+ * Note: ACO_BENE_BY_COUNTY uses positional columns ($1, $2, etc.)
+ * Column order: $1=AB_PSN_YRS_AGDU, $2=AB_PSN_YRS_AGND, $3=AB_PSN_YRS_DIS, $4=AB_PSN_YRS_ESRD,
+ *               $5=ACO_ID, $6=COUNTY_ID, $7=COUNTY_NAME, $8=STATE_ID, $9=STATE_NAME,
+ *               $10=TOT_AB, $11=TOT_AB_PSN_YRS, $12=YEAR
+ */
+export async function fetchCountyBeneficiaries(
+  year: number
+): Promise<CountyBeneficiary[]> {
+  const startTime = Date.now();
+  console.log(`[BUILD] Fetching county beneficiaries for year ${year}...`);
+
+  const config = getSnowflakeConfig();
+
+  const sql = `
+    SELECT
+      $5 as ACO_ID,
+      TRY_CAST($12 AS INT) as YEAR,
+      $9 as STATE_NAME,
+      $8 as STATE_ID,
+      $7 as COUNTY_NAME,
+      $6 as COUNTY_ID,
+      TRY_CAST($10 AS INT) as TOT_AB,
+      TRY_CAST($11 AS FLOAT) as TOT_AB_PSN_YRS,
+      TRY_CAST($1 AS FLOAT) as AB_PSN_YRS_AGDU,
+      TRY_CAST($2 AS FLOAT) as AB_PSN_YRS_AGND,
+      TRY_CAST($3 AS FLOAT) as AB_PSN_YRS_DIS,
+      TRY_CAST($4 AS FLOAT) as AB_PSN_YRS_ESRD
+    FROM ${config.database}.${config.schema}.ACO_BENE_BY_COUNTY
+    WHERE TRY_CAST($12 AS INT) = ${year}
+    ORDER BY $9, $7
+  `;
+
+  const rows = await querySnowflake<CountyBeneficiary>(sql, config);
+
+  const elapsed = Date.now() - startTime;
+  console.log(`[BUILD] ✓ County beneficiaries fetched: ${rows.length} rows in ${elapsed}ms`);
+
+  return rows;
+}
+
+/**
+ * County beneficiary dashboard data - all years
+ */
+export interface CountyBeneficiaryDashboardData {
+  years: number[];
+  dataByYear: Record<number, CountyBeneficiary[]>;
+  buildTimestamp: string;
+}
+
+/**
+ * Fetch all county beneficiary data for all years
+ */
+export async function fetchCountyBeneficiaryData(): Promise<CountyBeneficiaryDashboardData> {
+  const startTime = Date.now();
+  console.log('[BUILD] ===== Fetching County Beneficiary Data =====');
+
+  const years = await fetchAvailableYears();
+
+  if (years.length === 0) {
+    return {
+      years: [],
+      dataByYear: {},
+      buildTimestamp: new Date().toISOString(),
+    };
+  }
+
+  // Fetch data for each year in parallel
+  const yearDataPromises = years.map(async (year) => {
+    const data = await fetchCountyBeneficiaries(year);
+    return { year, data };
+  });
+
+  const yearDataResults = await Promise.all(yearDataPromises);
+
+  const dataByYear: Record<number, CountyBeneficiary[]> = {};
+  let totalRows = 0;
+
+  for (const { year, data } of yearDataResults) {
+    dataByYear[year] = data;
+    totalRows += data.length;
+  }
+
+  const elapsed = Date.now() - startTime;
+  console.log(`[BUILD] ✓ County beneficiary data complete: ${years.length} years, ${totalRows} total rows in ${elapsed}ms`);
+
+  return {
+    years,
+    dataByYear,
+    buildTimestamp: new Date().toISOString(),
+  };
+}

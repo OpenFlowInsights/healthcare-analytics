@@ -144,45 +144,52 @@ export async function fetchYearComparison(): Promise<YearComparisonData[]> {
   const startTime = Date.now();
   console.log('[BUILD] Fetching year-over-year comparison...');
 
-  const config = getSnowflakeConfig();
-  const sql = `
-    SELECT
-      "Year" as year,
-      'Part D' as program,
-      SUM("Tot_Spndng") as actual_spending,
-      SUM("Tot_Clms") as actual_claims,
-      "Year" as periods_included
-    FROM RAW.RAW_PARTD_SPENDING_QUARTERLY
-    WHERE "Year" IN ('2024 (Q1-Q4)', '2025 (Q1-Q2)')
-    GROUP BY "Year"
+  try {
+    const config = getSnowflakeConfig();
+    const sql = `
+      SELECT
+        "Year" as year,
+        'Part D' as program,
+        SUM("Tot_Spndng") as actual_spending,
+        SUM("Tot_Clms") as actual_claims,
+        "Year" as periods_included
+      FROM RAW.RAW_PARTD_SPENDING_QUARTERLY
+      WHERE "Year" IN ('2024 (Q1-Q4)', '2025 (Q1-Q2)')
+      GROUP BY "Year"
 
-    UNION ALL
+      UNION ALL
 
-    SELECT
-      "Year" as year,
-      'Part B' as program,
-      SUM("Tot_Spndng") as actual_spending,
-      SUM("Tot_Clms") as actual_claims,
-      "Year" as periods_included
-    FROM RAW.RAW_PARTB_SPENDING_QUARTERLY
-    WHERE "Year" IN ('2024 (Q1-Q4)', '2025 (Q1-Q2)')
-    GROUP BY "Year"
+      SELECT
+        "Year" as year,
+        'Part B' as program,
+        SUM("Tot_Spndng") as actual_spending,
+        SUM("Tot_Clms") as actual_claims,
+        "Year" as periods_included
+      FROM RAW.RAW_PARTB_SPENDING_QUARTERLY
+      WHERE "Year" IN ('2024 (Q1-Q4)', '2025 (Q1-Q2)')
+      GROUP BY "Year"
 
-    ORDER BY year DESC, program
-  `;
+      ORDER BY year DESC, program
+    `;
 
-  const data = await querySnowflake<YearComparisonData>(sql, config);
+    const data = await querySnowflake<YearComparisonData>(sql, config);
 
-  // Calculate annualized projections for 2025 (Q1-Q2 represents 2 quarters, so multiply by 2)
-  const processedData = data.map(row => ({
-    ...row,
-    annualized_spending: row.year.includes('2025') ? row.actual_spending * 2 : row.actual_spending,
-  }));
+    // Calculate annualized projections for 2025 (Q1-Q2 represents 2 quarters, so multiply by 2)
+    const processedData = data.map(row => ({
+      ...row,
+      year: row.year || '',
+      annualized_spending: row.year?.includes('2025') ? row.actual_spending * 2 : row.actual_spending,
+    }));
 
-  const elapsed = Date.now() - startTime;
-  console.log(`[BUILD] ✓ Year comparison fetched: ${data.length} rows in ${elapsed}ms`);
+    const elapsed = Date.now() - startTime;
+    console.log(`[BUILD] ✓ Year comparison fetched: ${processedData.length} rows in ${elapsed}ms`);
 
-  return processedData;
+    return processedData;
+  } catch (error) {
+    console.error('[BUILD] ✗ Year comparison fetch failed:', error);
+    // Return empty array if query fails
+    return [];
+  }
 }
 
 /**
