@@ -128,7 +128,65 @@ export async function fetchDrugSpendSummary(): Promise<DrugSpendSummary> {
 }
 
 /**
- * Fetch quarterly spending trends
+ * Fetch year-over-year spending comparison
+ * Returns 2024 (full year) vs 2025 (Q1-Q2) with annualized projections
+ */
+export interface YearComparisonData {
+  year: string;
+  program: string;
+  actual_spending: number;
+  actual_claims: number;
+  periods_included: string;
+  annualized_spending?: number;
+}
+
+export async function fetchYearComparison(): Promise<YearComparisonData[]> {
+  const startTime = Date.now();
+  console.log('[BUILD] Fetching year-over-year comparison...');
+
+  const config = getSnowflakeConfig();
+  const sql = `
+    SELECT
+      "Year" as year,
+      'Part D' as program,
+      SUM("Tot_Spndng") as actual_spending,
+      SUM("Tot_Clms") as actual_claims,
+      "Year" as periods_included
+    FROM RAW.RAW_PARTD_SPENDING_QUARTERLY
+    WHERE "Year" IN ('2024 (Q1-Q4)', '2025 (Q1-Q2)')
+    GROUP BY "Year"
+
+    UNION ALL
+
+    SELECT
+      "Year" as year,
+      'Part B' as program,
+      SUM("Tot_Spndng") as actual_spending,
+      SUM("Tot_Clms") as actual_claims,
+      "Year" as periods_included
+    FROM RAW.RAW_PARTB_SPENDING_QUARTERLY
+    WHERE "Year" IN ('2024 (Q1-Q4)', '2025 (Q1-Q2)')
+    GROUP BY "Year"
+
+    ORDER BY year DESC, program
+  `;
+
+  const data = await querySnowflake<YearComparisonData>(sql, config);
+
+  // Calculate annualized projections for 2025 (Q1-Q2 represents 2 quarters, so multiply by 2)
+  const processedData = data.map(row => ({
+    ...row,
+    annualized_spending: row.year.includes('2025') ? row.actual_spending * 2 : row.actual_spending,
+  }));
+
+  const elapsed = Date.now() - startTime;
+  console.log(`[BUILD] ✓ Year comparison fetched: ${data.length} rows in ${elapsed}ms`);
+
+  return processedData;
+}
+
+/**
+ * Fetch quarterly spending trends (kept for compatibility)
  * Returns all available quarters for both Part D and Part B
  */
 export async function fetchDrugSpendTrend(): Promise<DrugSpendTrend[]> {
@@ -249,15 +307,16 @@ export async function fetchDrugSpendingDashboardData() {
   const startTime = Date.now();
   console.log('[BUILD] ===== Fetching Drug Spending Dashboard Data =====');
 
-  const [summary, trend, drivers, categories] = await Promise.all([
+  const [summary, trend, drivers, categories, yearComparison] = await Promise.all([
     fetchDrugSpendSummary(),
     fetchDrugSpendTrend(),
     fetchDrugDrivers(),
     fetchDrugCategories(),
+    fetchYearComparison(),
   ]);
 
   const elapsed = Date.now() - startTime;
-  const totalRows = 1 + trend.length + drivers.length + categories.length;
+  const totalRows = 1 + trend.length + drivers.length + categories.length + yearComparison.length;
 
   console.log(`[BUILD] ✓ Drug spending dashboard data complete: ${totalRows} rows in ${elapsed}ms`);
   console.log(`[BUILD] Data timestamp: ${new Date().toISOString()}`);
@@ -267,6 +326,7 @@ export async function fetchDrugSpendingDashboardData() {
     trend,
     drivers,
     categories,
+    yearComparison,
     buildTimestamp: new Date().toISOString(),
   };
 }

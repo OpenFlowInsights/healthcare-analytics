@@ -30,6 +30,7 @@ import type {
   DrugSpendTrend,
   DrugDriver,
   DrugCategory,
+  YearComparisonData,
 } from '@/lib/data/drug-spending';
 
 interface DrugSpendingDashboardClientProps {
@@ -38,6 +39,7 @@ interface DrugSpendingDashboardClientProps {
     trend: DrugSpendTrend[];
     drivers: DrugDriver[];
     categories: DrugCategory[];
+    yearComparison: YearComparisonData[];
     buildTimestamp: string;
   };
 }
@@ -163,7 +165,7 @@ const KPICard = ({ title, value, icon, color, subtitle, trend }: KPICardProps) =
 };
 
 export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClientProps) {
-  const { summary, trend, drivers, categories, buildTimestamp } = data;
+  const { summary, trend, drivers, categories, yearComparison, buildTimestamp } = data;
 
   const [sortColumn, setSortColumn] = useState<string>("TOTAL_SPENDING");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -316,51 +318,107 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
             />
           </div>
 
-          {/* Row 2: Quarterly Trend Chart */}
+          {/* Row 2: Year-over-Year Spending Comparison */}
           <div className="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Quarterly Spending Trend</h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={chartData}>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Year-over-Year Spending Comparison</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                2024 Full Year (Q1-Q4) vs 2025 Through Q2 (Q1-Q2) with annualized projection
+              </p>
+            </div>
+            <ResponsiveContainer width="100%" height={450}>
+              <BarChart
+                data={(() => {
+                  // Transform yearComparison data for visualization
+                  const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2024'));
+                  const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2025'));
+                  const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2024'));
+                  const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2025'));
+
+                  return [
+                    {
+                      name: 'Part D',
+                      '2024 Actual\n(Full Year)': partD2024?.actual_spending || 0,
+                      '2025 Actual\n(Q1-Q2)': partD2025?.actual_spending || 0,
+                      '2025 Projected\n(Annualized)': partD2025?.annualized_spending || 0,
+                    },
+                    {
+                      name: 'Part B',
+                      '2024 Actual\n(Full Year)': partB2024?.actual_spending || 0,
+                      '2025 Actual\n(Q1-Q2)': partB2025?.actual_spending || 0,
+                      '2025 Projected\n(Annualized)': partB2025?.annualized_spending || 0,
+                    },
+                  ];
+                })()}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="period"
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis
-                  tickFormatter={(value) => formatCurrency(value)}
-                  tick={{ fontSize: 12 }}
-                />
+                <XAxis dataKey="name" />
+                <YAxis tickFormatter={(value) => formatCurrency(value)} />
                 <Tooltip
                   formatter={(value: any) => formatCurrencyDetailed(value)}
-                  labelStyle={{ color: "#000" }}
+                  contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }}
                 />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="partDSpending"
-                  stroke="#8b5cf6"
-                  strokeWidth={2}
-                  name="Part D"
-                  dot={{ r: 4 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="partBSpending"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  name="Part B"
-                  dot={{ r: 4 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="totalSpending"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  name="Combined"
-                  dot={{ r: 4 }}
-                />
-              </LineChart>
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                <Bar dataKey="2024 Actual\n(Full Year)" fill="#3b82f6" />
+                <Bar dataKey="2025 Actual\n(Q1-Q2)" fill="#f59e0b" />
+                <Bar dataKey="2025 Projected\n(Annualized)" fill="#10b981" />
+              </BarChart>
             </ResponsiveContainer>
+
+            {/* Growth Rate Analysis */}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(() => {
+                const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2024'));
+                const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2025'));
+                const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2024'));
+                const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2025'));
+
+                const partDGrowth = partD2024 && partD2025
+                  ? ((partD2025.annualized_spending! - partD2024.actual_spending) / partD2024.actual_spending * 100)
+                  : 0;
+                const partBGrowth = partB2024 && partB2025
+                  ? ((partB2025.annualized_spending! - partB2024.actual_spending) / partB2024.actual_spending * 100)
+                  : 0;
+
+                return (
+                  <>
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Part D Projected Growth</p>
+                          <p className={`text-2xl font-bold mt-1 ${partDGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {partDGrowth >= 0 ? '+' : ''}{partDGrowth.toFixed(1)}%
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">2024 FY vs 2025 Annualized</p>
+                        </div>
+                        {partDGrowth >= 0 ? (
+                          <TrendingUp className="w-8 h-8 text-green-600" />
+                        ) : (
+                          <TrendingDown className="w-8 h-8 text-red-600" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Part B Projected Growth</p>
+                          <p className={`text-2xl font-bold mt-1 ${partBGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {partBGrowth >= 0 ? '+' : ''}{partBGrowth.toFixed(1)}%
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">2024 FY vs 2025 Annualized</p>
+                        </div>
+                        {partBGrowth >= 0 ? (
+                          <TrendingUp className="w-8 h-8 text-green-600" />
+                        ) : (
+                          <TrendingDown className="w-8 h-8 text-red-600" />
+                        )}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </div>
 
           {/* Row 3: Top 20 Drugs Bar Chart */}
@@ -440,27 +498,135 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
             </ResponsiveContainer>
           </div>
 
-          {/* Row 4: Category Treemap */}
-          {treemapData.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Drug Categories (Latest Quarter)
-              </h2>
-              <ResponsiveContainer width="100%" height={400}>
-                <Treemap
-                  data={treemapData}
-                  dataKey="value"
-                  aspectRatio={4 / 3}
-                  stroke="#fff"
-                  content={<CustomTreemapContent />}
-                >
-                  <Tooltip
-                    formatter={(value: any) => [formatCurrencyDetailed(value), "Spending"]}
-                  />
-                </Treemap>
-              </ResponsiveContainer>
+          {/* Row 4: Spending Composition Analysis */}
+          <div className="bg-white p-6 rounded-lg shadow mb-8">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Spending Composition Change</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                How Part D vs Part B spending mix has shifted from 2024 to projected 2025
+              </p>
             </div>
-          )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* 2024 Composition */}
+              {(() => {
+                const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2024'));
+                const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2024'));
+                const total2024 = (partD2024?.actual_spending || 0) + (partB2024?.actual_spending || 0);
+                const partDPct2024 = total2024 > 0 ? (partD2024?.actual_spending || 0) / total2024 * 100 : 0;
+                const partBPct2024 = total2024 > 0 ? (partB2024?.actual_spending || 0) / total2024 * 100 : 0;
+
+                const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2025'));
+                const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2025'));
+                const total2025 = (partD2025?.annualized_spending || 0) + (partB2025?.annualized_spending || 0);
+                const partDPct2025 = total2025 > 0 ? (partD2025?.annualized_spending || 0) / total2025 * 100 : 0;
+                const partBPct2025 = total2025 > 0 ? (partB2025?.annualized_spending || 0) / total2025 * 100 : 0;
+
+                const partDChange = partDPct2025 - partDPct2024;
+                const partBChange = partBPct2025 - partBPct2024;
+
+                return (
+                  <>
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h3 className="font-semibold text-gray-700 mb-4">2024 Full Year</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-purple-600">Part D</span>
+                            <span className="text-sm font-bold">{partDPct2024.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="bg-purple-600 h-3 rounded-full" style={{ width: `${partDPct2024}%` }}></div>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1">{formatCurrency(partD2024?.actual_spending || 0)}</p>
+                        </div>
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-blue-600">Part B</span>
+                            <span className="text-sm font-bold">{partBPct2024.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="bg-blue-600 h-3 rounded-full" style={{ width: `${partBPct2024}%` }}></div>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1">{formatCurrency(partB2024?.actual_spending || 0)}</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-gray-300">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-semibold">Total:</span>
+                          <span className="text-sm font-bold">{formatCurrency(total2024)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-green-50 p-6 rounded-lg border-2 border-green-200">
+                      <h3 className="font-semibold text-gray-700 mb-4">2025 Projected</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-purple-600">Part D</span>
+                            <span className="text-sm font-bold">{partDPct2025.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="bg-purple-600 h-3 rounded-full" style={{ width: `${partDPct2025}%` }}></div>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1">{formatCurrency(partD2025?.annualized_spending || 0)}</p>
+                        </div>
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-blue-600">Part B</span>
+                            <span className="text-sm font-bold">{partBPct2025.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="bg-blue-600 h-3 rounded-full" style={{ width: `${partBPct2025}%` }}></div>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1">{formatCurrency(partB2025?.annualized_spending || 0)}</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-green-300">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-semibold">Total:</span>
+                          <span className="text-sm font-bold">{formatCurrency(total2025)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-6 rounded-lg">
+                      <h3 className="font-semibold text-gray-700 mb-4">Composition Shift</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium text-purple-600">Part D Mix Change</span>
+                            <span className={`text-lg font-bold ${partDChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {partDChange >= 0 ? '+' : ''}{partDChange.toFixed(2)}pp
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600">
+                            {partDPct2024.toFixed(1)}% → {partDPct2025.toFixed(1)}%
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium text-blue-600">Part B Mix Change</span>
+                            <span className={`text-lg font-bold ${partBChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {partBChange >= 0 ? '+' : ''}{partBChange.toFixed(2)}pp
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600">
+                            {partBPct2024.toFixed(1)}% → {partBPct2025.toFixed(1)}%
+                          </p>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-blue-200">
+                          <p className="text-xs text-gray-600 italic">
+                            pp = percentage points
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
 
           {/* Row 5: Detailed Table */}
           <div className="bg-white p-6 rounded-lg shadow">
