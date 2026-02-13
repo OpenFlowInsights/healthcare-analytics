@@ -330,10 +330,10 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
               <BarChart
                 data={(() => {
                   // Transform yearComparison data for visualization
-                  const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2024'));
-                  const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2025'));
-                  const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2024'));
-                  const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2025'));
+                  const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2024'));
+                  const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2025'));
+                  const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2024'));
+                  const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2025'));
 
                   return [
                     {
@@ -369,10 +369,10 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
             {/* Growth Rate Analysis */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               {(() => {
-                const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2024'));
-                const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2025'));
-                const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2024'));
-                const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2025'));
+                const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2024'));
+                const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2025'));
+                const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2024'));
+                const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2025'));
 
                 const partDGrowth = partD2024 && partD2025
                   ? ((partD2025.annualized_spending! - partD2024.actual_spending) / partD2024.actual_spending * 100)
@@ -509,14 +509,14 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* 2024 Composition */}
               {(() => {
-                const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2024'));
-                const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2024'));
+                const partD2024 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2024'));
+                const partB2024 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2024'));
                 const total2024 = (partD2024?.actual_spending || 0) + (partB2024?.actual_spending || 0);
                 const partDPct2024 = total2024 > 0 ? (partD2024?.actual_spending || 0) / total2024 * 100 : 0;
                 const partBPct2024 = total2024 > 0 ? (partB2024?.actual_spending || 0) / total2024 * 100 : 0;
 
-                const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year.includes('2025'));
-                const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year.includes('2025'));
+                const partD2025 = yearComparison.find(d => d.program === 'Part D' && d.year?.includes('2025'));
+                const partB2025 = yearComparison.find(d => d.program === 'Part B' && d.year?.includes('2025'));
                 const total2025 = (partD2025?.annualized_spending || 0) + (partB2025?.annualized_spending || 0);
                 const partDPct2025 = total2025 > 0 ? (partD2025?.annualized_spending || 0) / total2025 * 100 : 0;
                 const partBPct2025 = total2025 > 0 ? (partB2025?.annualized_spending || 0) / total2025 * 100 : 0;
