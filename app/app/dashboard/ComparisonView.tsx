@@ -118,14 +118,17 @@ export function ComparisonView({ data, selectedYear, onYearChange, preselectedAC
     }).filter(item => item.data !== null);
   }, [selectedACOId, years, selectedYear, dataByYear]);
 
-  // Filter ACOs for search
+  // Filter ACOs for search (no minimum length requirement, alphabetically sorted)
   const searchedACOs = useMemo(() => {
-    if (!searchTerm) return allACOs;
+    const filtered = searchTerm
+      ? allACOs.filter(aco =>
+          aco.ACO_NAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          aco.ACO_ID.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : allACOs;
 
-    return allACOs.filter(aco =>
-      aco.ACO_NAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      aco.ACO_ID.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Sort alphabetically by ACO_NAME
+    return [...filtered].sort((a, b) => a.ACO_NAME.localeCompare(b.ACO_NAME));
   }, [allACOs, searchTerm]);
 
   // Apply filters to create comparison group (excluding focus ACO)

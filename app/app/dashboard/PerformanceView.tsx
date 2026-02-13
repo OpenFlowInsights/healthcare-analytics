@@ -7,6 +7,8 @@ import type { MultiYearDashboardData, DashboardSummary, ACORanking } from '@/lib
 interface PerformanceViewProps {
   data: MultiYearDashboardData;
   selectedYear: number;
+  isAllYears: boolean;
+  combinedRankings: ACORanking[];
   onYearChange: (year: number) => void;
   onACOClick?: (acoId: string) => void;
 }
@@ -57,7 +59,7 @@ const YoYIndicatorComponent = ({ yoy, label, formatValue }: {
   );
 };
 
-export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }: PerformanceViewProps) {
+export function PerformanceView({ data, selectedYear, isAllYears, combinedRankings, onYearChange, onACOClick }: PerformanceViewProps) {
   const { years, dataByYear } = data;
 
   // Client-side state for filtering/sorting
@@ -69,6 +71,7 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
   const [hasFQHCs, setHasFQHCs] = useState<boolean | undefined>(undefined);
   const [minFQHCPct, setMinFQHCPct] = useState<number | undefined>(undefined);
   const [maxFQHCPct, setMaxFQHCPct] = useState<number | undefined>(undefined);
+  const [selectedBucket, setSelectedBucket] = useState<{track: string, range: string} | null>(null);
 
   // Get current year and previous year data
   const currentYearData = dataByYear[selectedYear];
@@ -76,7 +79,7 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
   const prevYearData = dataByYear[prevYear];
 
   const summary = currentYearData?.summary || {} as DashboardSummary;
-  const rankings = currentYearData?.rankings || [];
+  const rankings = isAllYears ? combinedRankings : (currentYearData?.rankings || []);
   const prevSummary = prevYearData?.summary;
 
   // Calculate YoY indicators for KPIs
@@ -120,6 +123,26 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
   // Client-side filtering and sorting
   const filteredAndSortedRankings = useMemo(() => {
     let filtered = rankingsWithYoY;
+
+    // Distribution bucket filter
+    if (selectedBucket) {
+      filtered = filtered.filter(aco => {
+        // Filter by track
+        if ((aco.ACO_TRACK || 'Unknown') !== selectedBucket.track) return false;
+
+        // Filter by savings range
+        const savingsRate = aco.SAVINGS_RATE_PCT;
+        const range = selectedBucket.range;
+
+        if (range === '> 10%') return savingsRate > 10;
+        if (range === '5% to 10%') return savingsRate > 5 && savingsRate <= 10;
+        if (range === '0% to 5%') return savingsRate > 0 && savingsRate <= 5;
+        if (range === '-5% to 0%') return savingsRate > -5 && savingsRate <= 0;
+        if (range === '< -5%') return savingsRate <= -5;
+
+        return false;
+      });
+    }
 
     // Search filter
     if (searchTerm) {
@@ -171,7 +194,7 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
     });
 
     return sorted;
-  }, [rankingsWithYoY, searchTerm, sortColumn, sortDirection, hasFQHCs, minFQHCPct, maxFQHCPct]);
+  }, [rankingsWithYoY, searchTerm, sortColumn, sortDirection, hasFQHCs, minFQHCPct, maxFQHCPct, selectedBucket]);
 
   // Calculate distribution matrix (Track x Savings Range)
   const distributionMatrix = useMemo(() => {
@@ -321,10 +344,23 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
 
       {/* Distribution Matrix: Track x Savings Range */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-bold mb-4">ACO Distribution by Track and Savings Performance</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Number of ACOs in each track and savings/loss range for PY{selectedYear}
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold">ACO Distribution by Track and Savings Performance</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {isAllYears ? 'All Years' : `PY${selectedYear}`} - Click a cell to filter ACOs below
+            </p>
+          </div>
+          {selectedBucket && (
+            <button
+              onClick={() => setSelectedBucket(null)}
+              className="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+              Clear filter: {selectedBucket.track} / {selectedBucket.range}
+            </button>
+          )}
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
@@ -378,10 +414,23 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
                         textColor = count > 0 ? 'text-yellow-700' : 'text-gray-400';
                       }
 
+                      const isSelected = selectedBucket?.track === track && selectedBucket?.range === range.label;
+
                       return (
                         <td
                           key={range.label}
-                          className={`px-4 py-3 border border-gray-200 text-center ${bgColor}`}
+                          className={`px-4 py-3 border border-gray-200 text-center ${bgColor} ${
+                            count > 0 ? 'cursor-pointer hover:ring-2 hover:ring-blue-400 transition-shadow' : ''
+                          } ${isSelected ? 'ring-2 ring-blue-600' : ''}`}
+                          onClick={() => {
+                            if (count > 0) {
+                              if (isSelected) {
+                                setSelectedBucket(null);
+                              } else {
+                                setSelectedBucket({ track, range: range.label });
+                              }
+                            }
+                          }}
                         >
                           <div className={`text-lg font-bold ${textColor}`}>
                             {count}
@@ -577,6 +626,14 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
                 >
                   ACO Name {sortColumn === 'ACO_NAME' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
+                {isAllYears && (
+                  <th
+                    className="text-center py-3 px-4 cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort('PERFORMANCE_YEAR')}
+                  >
+                    PY {sortColumn === 'PERFORMANCE_YEAR' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </th>
+                )}
                 <th className="text-left py-3 px-4">Track</th>
                 <th
                   className="text-right py-3 px-4 cursor-pointer hover:bg-gray-50"
@@ -601,12 +658,15 @@ export function PerformanceView({ data, selectedYear, onYearChange, onACOClick }
             <tbody>
               {displayedRankings.map((aco, index) => (
                 <tr
-                  key={aco.ACO_ID}
+                  key={`${aco.ACO_ID}-${aco.PERFORMANCE_YEAR}`}
                   className="border-b hover:bg-gray-50 cursor-pointer"
                   onClick={() => onACOClick?.(aco.ACO_ID)}
                 >
                   <td className="py-3 px-4">{index + 1}</td>
                   <td className="py-3 px-4">{aco.ACO_NAME}</td>
+                  {isAllYears && (
+                    <td className="py-3 px-4 text-center font-medium">{aco.PERFORMANCE_YEAR}</td>
+                  )}
                   <td className="py-3 px-4">{aco.ACO_TRACK}</td>
                   <td className="py-3 px-4 text-right">
                     {aco.TOTAL_BENEFICIARIES?.toLocaleString()}

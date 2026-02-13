@@ -365,7 +365,14 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
 
           {/* Row 3: Top 20 Drugs Bar Chart */}
           <div className="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Top 20 Drugs by Spending</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Top 20 Drugs by Spending</h2>
+              {drivers.length > 0 && drivers[0].YEAR && drivers[0].QUARTER && (
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                  {drivers[0].YEAR} {drivers[0].QUARTER}
+                </span>
+              )}
+            </div>
             <ResponsiveContainer width="100%" height={600}>
               <BarChart
                 data={drivers.slice(0, 20)}
@@ -457,7 +464,14 @@ export function DrugSpendingDashboardClient({ data }: DrugSpendingDashboardClien
 
           {/* Row 5: Detailed Table */}
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Detailed Drug Analysis</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Detailed Drug Analysis</h2>
+              {drivers.length > 0 && drivers[0].YEAR && drivers[0].QUARTER && (
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                  {drivers[0].YEAR} {drivers[0].QUARTER} Data
+                </span>
+              )}
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
